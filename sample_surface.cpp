@@ -12,17 +12,17 @@ struct Vec
 {
     T arr[N];
 
-    // T &operator[](size_t i)
-    // {
-    //     return arr[i];
-    // }
+    T &operator[](size_t i)
+    {
+        return arr[i];
+    }
 
     Vec binary_op(const Vec &other, std::function<T(T, T)> op) const
     {
         Vec result;
         for (size_t i = 0; i < N; i++)
         {
-            result.arr[i] = op(arr[i], other.arr[i]);
+            result[i] = op(arr[i], other[i]);
         }
         return result;
     }
@@ -32,7 +32,7 @@ struct Vec
         Vec result;
         for (size_t i = 0; i < N; i++)
         {
-            result.arr[i] = op(arr[i], other);
+            result[i] = op(arr[i], other);
         }
         return result;
     }
@@ -57,10 +57,10 @@ struct Vec
 
     T dot(const Vec &other) const
     {
-        T result = arr[0] * other.arr[0];
+        T result = arr[0] * other[0];
         for (size_t i = 1; i < N; i++)
         {
-            result += arr[i] * other.arr[i];
+            result += arr[i] * other[i];
         }
         return result;
     }
@@ -81,9 +81,9 @@ using Vec2f = Vec<float, 2>;
 
 Vec3f vec3f_cross_product(const Vec3f &a, const Vec3f &b)
 {
-    float x = a.arr[1] * b.arr[2] - a.arr[2] * b.arr[1];
-    float y = a.arr[2] * b.arr[0] - a.arr[0] * b.arr[2];
-    float z = a.arr[0] * b.arr[1] - a.arr[1] * b.arr[0];
+    float x = a[1] * b[2] - a[2] * b[1];
+    float y = a[2] * b[0] - a[0] * b[2];
+    float z = a[0] * b[1] - a[1] * b[0];
     return {x, y, z};
 }
 
