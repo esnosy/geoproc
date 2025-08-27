@@ -67,5 +67,15 @@ int main(int argc, char **argv)
     }
     std::cout << vertices.size() << std::endl;
 
+    std::ofstream ofs(output_filepath, std::ofstream::binary);
+    ofs << "ply\n";
+    ofs << "format binary_little_endian 1.0\n";
+    ofs << "element vertex " << vertices.size() << "\n";
+    ofs << "property float x\n";
+    ofs << "property float y\n";
+    ofs << "property float z\n";
+    ofs << "end_header\n";
+    ofs.write(reinterpret_cast<char *>(&vertices[0]), 12 * vertices.size());
+
     return 0;
 }
