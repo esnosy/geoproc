@@ -6,6 +6,7 @@
 #include <functional>
 #include <cmath>
 #include <random>
+#include <chrono>
 
 #include "vec.hpp"
 #include "read_stl.hpp"
@@ -37,9 +38,14 @@ int main(int argc, char **argv)
     const size_t num_samples = std::stoull(argv[2]);
     const char *output_filepath = argv[3];
 
+    const auto t0 = std::chrono::high_resolution_clock::now();
     const auto vertices = read_stl(input_filepath);
+    const auto t1 = std::chrono::high_resolution_clock::now();
+    std::cout << "Read STL took: " << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count() << "ms" << std::endl;
+
     std::cout << vertices.size() << std::endl;
 
+    const auto t2 = std::chrono::high_resolution_clock::now();
     std::vector<float> triangle_areas;
     triangle_areas.reserve(vertices.size() / 3);
     size_t i = 0;
@@ -54,6 +60,8 @@ int main(int argc, char **argv)
         triangle_areas.push_back(area);
         i += 3;
     }
+    const auto t3 = std::chrono::high_resolution_clock::now();
+    std::cout << "Calculating areas took: " << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count() << "ms" << std::endl;
 
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -63,6 +71,7 @@ int main(int argc, char **argv)
     std::vector<Vec3f> output_points;
     output_points.reserve(num_samples);
 
+    const auto t4 = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < num_samples; i++)
     {
         size_t triangle_index = dd(gen);
@@ -78,7 +87,10 @@ int main(int argc, char **argv)
         const auto p = ca * st[0] + cb * st[1] + c;
         output_points.push_back(p);
     }
+    const auto t5 = std::chrono::high_resolution_clock::now();
+    std::cout << "Sampling surface took: " << std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t4).count() << "ms" << std::endl;
 
+    const auto t6 = std::chrono::high_resolution_clock::now();
     std::ofstream ofs(output_filepath, std::ofstream::binary);
     ofs << "ply\n";
     ofs << "format binary_little_endian 1.0\n";
@@ -88,6 +100,8 @@ int main(int argc, char **argv)
     ofs << "property float z\n";
     ofs << "end_header\n";
     ofs.write(reinterpret_cast<char *>(&output_points[0]), 12 * output_points.size());
+    const auto t7 = std::chrono::high_resolution_clock::now();
+    std::cout << "Writing output file took: " << std::chrono::duration_cast<std::chrono::milliseconds>(t7 - t6).count() << "ms" << std::endl;
 
     return 0;
 }
