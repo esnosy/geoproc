@@ -69,9 +69,15 @@ struct Vec
     {
         return std::sqrt(dot(*this));
     }
+
+    const T &operator[](size_t i) const
+    {
+        return arr[i];
+    }
 };
 
 using Vec3f = Vec<float, 3>;
+using Vec2f = Vec<float, 2>;
 
 Vec3f vec3f_cross_product(const Vec3f &a, const Vec3f &b)
 {
@@ -79,6 +85,12 @@ Vec3f vec3f_cross_product(const Vec3f &a, const Vec3f &b)
     float y = a.arr[2] * b.arr[0] - a.arr[0] * b.arr[2];
     float z = a.arr[0] * b.arr[1] - a.arr[1] * b.arr[0];
     return {x, y, z};
+}
+
+Vec2f uniform_sample_triangle(const Vec2f &u)
+{
+    float su0 = std::sqrt(u[0]);
+    return {1 - su0, u[1] * su0};
 }
 
 int main(int argc, char **argv)
@@ -164,15 +176,16 @@ int main(int argc, char **argv)
     for (size_t i = 0; i < num_samples; i++)
     {
         size_t triangle_index = dd(gen);
-        // TODO: convert u and v to uniformly sample triangle (see The PBR Book uniform sampling of a triangle)
-        float u = ud(gen);
-        float v = ud(gen);
         const auto a = vertices[triangle_index * 3];
         const auto b = vertices[triangle_index * 3 + 1];
         const auto c = vertices[triangle_index * 3 + 2];
         const auto ca = a - c;
         const auto cb = b - c;
-        const auto p = ca * u + cb * v + c;
+
+        float u = ud(gen);
+        float v = ud(gen);
+        const auto st = uniform_sample_triangle({u, v});
+        const auto p = ca * st[0] + cb * st[1] + c;
         output_points.push_back(p);
     }
 
