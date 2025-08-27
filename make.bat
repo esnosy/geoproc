@@ -1,1 +1,1 @@
-cl /EHsc /O2 /std:c++14 sample_surface.cpp
+cl /EHsc /O2 /std:c++20 sample_surface.cpp
