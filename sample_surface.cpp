@@ -87,6 +87,7 @@ Vec3f vec3f_cross_product(const Vec3f &a, const Vec3f &b)
     return {x, y, z};
 }
 
+// https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations#SamplingaTriangle
 Vec2f uniform_sample_triangle(const Vec2f &u)
 {
     float su0 = std::sqrt(u[0]);
