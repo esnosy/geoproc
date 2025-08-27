@@ -54,35 +54,35 @@ void fill_circle(Image &image, size_t center_x, size_t center_y, size_t radius, 
 {
     const auto width = image.get_width();
     const auto height = image.get_height();
-    for (size_t i = center_x; i < radius + center_x; i++)
+    for (size_t row = center_x; row < radius + center_x; row++)
     {
-        for (size_t j = center_y; j < radius + center_y; j++)
+        for (size_t col = center_y; col < radius + center_y; col++)
         {
-            auto ir = i - center_x;
-            auto jr = j - center_y;
+            auto ir = row - center_x;
+            auto jr = col - center_y;
             auto rr = radius;
             if ((ir * ir + jr * jr) <= (rr * rr))
             {
-                if ((i < width) && (j < height))
-                    image.set_pixel(i, j, radius, green, blue);
+                if ((row < height) && (col < width))
+                    image.set_pixel(row, col, red, green, blue);
 
                 auto ir1 = center_x - ir;
                 auto jr1 = center_y - jr;
 
-                if ((ir1 < width) && (jr1 < height))
-                    image.set_pixel(ir1, jr1, radius, green, blue);
+                if ((ir1 < height) && (jr1 < width))
+                    image.set_pixel(ir1, jr1, red, green, blue);
 
                 auto ir2 = center_x - ir;
                 auto jr2 = center_y + jr;
 
-                if ((ir2 < width) && (jr2 < height))
-                    image.set_pixel(ir2, jr2, radius, green, blue);
+                if ((ir2 < height) && (jr2 < width))
+                    image.set_pixel(ir2, jr2, red, green, blue);
 
                 auto ir3 = center_x + ir;
                 auto jr3 = center_y - jr;
 
-                if ((ir3 < width) && (jr3 < height))
-                    image.set_pixel(ir3, jr3, radius, green, blue);
+                if ((ir3 < height) && (jr3 < width))
+                    image.set_pixel(ir3, jr3, red, green, blue);
             }
         }
     }
@@ -90,9 +90,9 @@ void fill_circle(Image &image, size_t center_x, size_t center_y, size_t radius, 
 
 int main(int argc, char **argv)
 {
-    Image image(4096, 4096);
-    image.clear(255, 0, 0);
-    fill_circle(image, 2048, 2048, 1024, 0, 0, 255);
+    Image image(1920, 1080);
+    image.clear(255, 255, 255);
+    fill_circle(image, 1080/2, 1920/2, 256, 255, 0, 0);
     image.write_ppm("image.ppm");
     return 0;
 }
