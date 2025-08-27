@@ -8,8 +8,8 @@
 #include <random>
 #include <chrono>
 
-#include "vec.hpp"
-#include "read_stl.hpp"
+#include "../libs/vec.hpp"
+#include "../libs/read_stl.hpp"
 
 Vec3f vec3f_cross_product(const Vec3f &a, const Vec3f &b)
 {
