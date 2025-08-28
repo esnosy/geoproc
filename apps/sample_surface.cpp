@@ -38,12 +38,16 @@ int main(int argc, char **argv)
     const size_t num_samples = std::stoull(argv[2]);
     const char *output_filepath = argv[3];
 
+    // Read vertices from .stl file
+
     const auto t0 = std::chrono::high_resolution_clock::now();
     const auto vertices = read_stl(input_filepath);
     const auto t1 = std::chrono::high_resolution_clock::now();
     std::cout << "Read STL took: " << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count() << "ms" << std::endl;
 
     std::cout << vertices.size() << std::endl;
+
+    // Calculate triangle areas
 
     const auto t2 = std::chrono::high_resolution_clock::now();
     std::vector<float> triangle_areas;
@@ -62,6 +66,8 @@ int main(int argc, char **argv)
     }
     const auto t3 = std::chrono::high_resolution_clock::now();
     std::cout << "Calculating areas took: " << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count() << "ms" << std::endl;
+
+    // Sample triangles randomly
 
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -89,6 +95,8 @@ int main(int argc, char **argv)
     }
     const auto t5 = std::chrono::high_resolution_clock::now();
     std::cout << "Sampling surface took: " << std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t4).count() << "ms" << std::endl;
+
+    // Write .ply file
 
     const auto t6 = std::chrono::high_resolution_clock::now();
     std::ofstream ofs(output_filepath, std::ofstream::binary);
