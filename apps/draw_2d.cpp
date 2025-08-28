@@ -4,36 +4,43 @@
 class Image
 {
     char *pixels = nullptr;
-    size_t width;
-    size_t height;
+    size_t num_columns;
+    size_t num_rows;
 
 public:
-    size_t get_width() const
+    Image(size_t num_columns, size_t num_rows) : num_columns(num_columns), num_rows(num_rows)
     {
-        return width;
-    }
-    size_t get_height() const
-    {
-        return height;
-    }
-    Image(size_t width, size_t height) : width(width), height(height)
-    {
-        this->pixels = new char[width * height * 3];
-        for (size_t i = 0; i < (width * height * 3); i++)
+        this->pixels = new char[num_columns * num_rows * 3];
+        for (size_t i = 0; i < (num_columns * num_rows * 3); i++)
         {
             this->pixels[i] = 0;
         }
     }
+    size_t get_num_columns() const
+    {
+        return num_columns;
+    }
+    size_t get_num_rows() const
+    {
+        return num_rows;
+    }
     void set_pixel(size_t row, size_t col, uint8_t r, uint8_t g, uint8_t b)
     {
-        size_t index = (row * width + col) * 3;
+        size_t index = (row * num_columns + col) * 3;
         pixels[index] = r;
         pixels[index + 1] = g;
         pixels[index + 2] = b;
     }
+    void get_pixel(size_t row, size_t col, uint8_t *r, uint8_t *g, uint8_t *b)
+    {
+        size_t index = (row * num_columns + col) * 3;
+        *r = pixels[index];
+        *g = pixels[index + 1];
+        *b = pixels[index + 2];
+    }
     void clear(uint8_t r, uint8_t g, uint8_t b)
     {
-        for (size_t i = 0; i < (width * height * 3); i += 3)
+        for (size_t i = 0; i < (num_columns * num_rows * 3); i += 3)
         {
             pixels[i] = r;
             pixels[i + 1] = g;
@@ -44,16 +51,16 @@ public:
     {
         std::ofstream output_file(output_filename, std::ofstream::binary);
         output_file << "P6\n";
-        output_file << width << " " << height << "\n";
+        output_file << num_columns << " " << num_rows << "\n";
         output_file << "255\n";
-        output_file.write(pixels, width * height * 3);
+        output_file.write(pixels, num_columns * num_rows * 3);
     }
 };
 
 void fill_circle(Image &image, size_t center_row, size_t center_col, size_t radius, uint8_t red, uint8_t green, uint8_t blue)
 {
-    const auto width = image.get_width();
-    const auto height = image.get_height();
+    const auto width = image.get_num_columns();
+    const auto height = image.get_num_rows();
     for (size_t row = center_row; row < radius + center_row; row++)
     {
         for (size_t col = center_col; col < radius + center_col; col++)
@@ -94,5 +101,34 @@ int main(int argc, char **argv)
     image.clear(255, 255, 255);
     fill_circle(image, 1080 / 2, 1920 / 2, 256, 255, 0, 0);
     image.write_ppm("image.ppm");
+
+    Image image2(1920 / 4, 1080 / 4);
+    for (size_t row = 0; row < image2.get_num_rows(); row++)
+    {
+        for (size_t col = 0; col < image2.get_num_columns(); col++)
+        {
+            size_t cr = 0;
+            size_t cg = 0;
+            size_t cb = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    size_t original_row = row * 4 + i;
+                    size_t original_col = col * 4 + j;
+                    uint8_t r, g, b;
+                    image.get_pixel(original_row, original_col, &r, &g, &b);
+                    cr += r;
+                    cg += g;
+                    cb += b;
+                }
+            }
+            cr /= (4 * 4);
+            cg /= (4 * 4);
+            cb /= (4 * 4);
+            image2.set_pixel(row, col, uint8_t(cr), uint8_t(cg), uint8_t(cb));
+        }
+    }
+    image2.write_ppm("image2.ppm");
     return 0;
 }
