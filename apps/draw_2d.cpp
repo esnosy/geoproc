@@ -31,7 +31,7 @@ public:
         pixels[index + 1] = g;
         pixels[index + 2] = b;
     }
-    void get_pixel(size_t row, size_t col, uint8_t *r, uint8_t *g, uint8_t *b)
+    void get_pixel(size_t row, size_t col, uint8_t *r, uint8_t *g, uint8_t *b) const
     {
         size_t index = (row * num_columns + col) * 3;
         *r = pixels[index];
@@ -47,7 +47,7 @@ public:
             pixels[i + 2] = b;
         }
     }
-    void write_ppm(const char *output_filename)
+    void write_ppm(const char *output_filename) const
     {
         std::ofstream output_file(output_filename, std::ofstream::binary);
         output_file << "P6\n";
@@ -95,14 +95,10 @@ void fill_circle(Image &image, size_t center_row, size_t center_col, size_t radi
     }
 }
 
-int main(int argc, char **argv)
+Image downsample(const Image &image, size_t n)
 {
-    Image image(1920, 1080);
-    image.clear(255, 255, 255);
-    fill_circle(image, 1080 / 2, 1920 / 2, 256, 255, 0, 0);
-    image.write_ppm("image.ppm");
+    Image image2(image.get_num_columns() / n, image.get_num_rows() / n);
 
-    Image image2(1920 / 4, 1080 / 4);
     for (size_t row = 0; row < image2.get_num_rows(); row++)
     {
         for (size_t col = 0; col < image2.get_num_columns(); col++)
@@ -110,12 +106,12 @@ int main(int argc, char **argv)
             size_t cr = 0;
             size_t cg = 0;
             size_t cb = 0;
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < n; i++)
             {
-                for (int j = 0; j < 4; j++)
+                for (int j = 0; j < n; j++)
                 {
-                    size_t original_row = row * 4 + i;
-                    size_t original_col = col * 4 + j;
+                    size_t original_row = row * n + i;
+                    size_t original_col = col * n + j;
                     uint8_t r, g, b;
                     image.get_pixel(original_row, original_col, &r, &g, &b);
                     cr += r;
@@ -123,12 +119,23 @@ int main(int argc, char **argv)
                     cb += b;
                 }
             }
-            cr /= (4 * 4);
-            cg /= (4 * 4);
-            cb /= (4 * 4);
+            cr /= (n * n);
+            cg /= (n * n);
+            cb /= (n * n);
             image2.set_pixel(row, col, uint8_t(cr), uint8_t(cg), uint8_t(cb));
         }
     }
+    return image2;
+}
+
+int main(int argc, char **argv)
+{
+    Image image(4096, 4096);
+    image.clear(255, 255, 255);
+    fill_circle(image, 4096 / 2, 4096 / 2, 512, 255, 0, 0);
+    image.write_ppm("image.ppm");
+
+    auto image2 = downsample(image, 8);
     image2.write_ppm("image2.ppm");
     return 0;
 }
