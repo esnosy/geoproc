@@ -6,6 +6,8 @@
 #include <string.h>
 #include <tchar.h>
 
+#include <gl/GL.h>
+
 // Global variables
 
 // The main window class name.
