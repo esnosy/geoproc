@@ -1,5 +1,5 @@
-#include <fstream>
 #include <cstdint>
+#include <fstream>
 
 class Image
 {
@@ -8,7 +8,8 @@ class Image
     size_t num_rows;
 
 public:
-    Image(size_t num_columns, size_t num_rows) : num_columns(num_columns), num_rows(num_rows)
+    Image(size_t num_columns, size_t num_rows)
+        : num_columns(num_columns), num_rows(num_rows)
     {
         this->pixels = new char[num_columns * num_rows * 3];
         for (size_t i = 0; i < (num_columns * num_rows * 3); i++)
@@ -16,14 +17,8 @@ public:
             this->pixels[i] = 0;
         }
     }
-    size_t get_num_columns() const
-    {
-        return num_columns;
-    }
-    size_t get_num_rows() const
-    {
-        return num_rows;
-    }
+    size_t get_num_columns() const { return num_columns; }
+    size_t get_num_rows() const { return num_rows; }
     void set_pixel(size_t row, size_t col, uint8_t r, uint8_t g, uint8_t b)
     {
         size_t index = (row * num_columns + col) * 3;
@@ -31,7 +26,8 @@ public:
         pixels[index + 1] = g;
         pixels[index + 2] = b;
     }
-    void get_pixel(size_t row, size_t col, uint8_t *r, uint8_t *g, uint8_t *b) const
+    void get_pixel(size_t row, size_t col, uint8_t *r, uint8_t *g,
+                   uint8_t *b) const
     {
         size_t index = (row * num_columns + col) * 3;
         *r = pixels[index];
@@ -57,7 +53,8 @@ public:
     }
 };
 
-void fill_circle(Image &image, size_t center_row, size_t center_col, size_t radius, uint8_t red, uint8_t green, uint8_t blue)
+void fill_circle(Image &image, size_t center_row, size_t center_col,
+                 size_t radius, uint8_t red, uint8_t green, uint8_t blue)
 {
     const auto width = image.get_num_columns();
     const auto height = image.get_num_rows();

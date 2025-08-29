@@ -4,7 +4,9 @@
 #include "../libs/aabb.hpp"
 #include "../libs/read_stl.hpp"
 
-template <typename T, size_t N> struct Node {
+template <typename T, size_t N>
+struct Node
+{
   AABB<T, N> aabb;
   Node *left, *right;
   size_t first, count;
@@ -12,13 +14,16 @@ template <typename T, size_t N> struct Node {
 
 using Node3f = Node<float, 3>;
 
-void free_tree(Node3f *root) {
+void free_tree(Node3f *root)
+{
   std::vector<Node3f *> stack;
   stack.push_back(root);
-  while (!stack.empty()) {
+  while (!stack.empty())
+  {
     auto node = stack.back();
     stack.pop_back();
-    if (node->left && node->right) {
+    if (node->left && node->right)
+    {
       stack.push_back(node->left);
       stack.push_back(node->right);
     }
@@ -26,9 +31,11 @@ void free_tree(Node3f *root) {
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 
-  if (argc != 2) {
+  if (argc != 2)
+  {
     std::cerr << "Expected arguments: /path/to/mesh.stl" << std::endl;
     return 1;
   }
@@ -47,11 +54,13 @@ int main(int argc, char **argv) {
   std::vector<Vec3f> left_buf;
   std::vector<Vec3f> right_buf;
 
-  while (!stack.empty()) {
+  while (!stack.empty())
+  {
     Node3f *node = stack.back();
     stack.pop_back();
     node->aabb.max = node->aabb.min = vertices[node->first];
-    for (size_t i = (node->first + 1); i < (node->first + node->count); i++) {
+    for (size_t i = (node->first + 1); i < (node->first + node->count); i++)
+    {
       node->aabb.max = vertices[i].element_wise_max(node->aabb.max);
       node->aabb.min = vertices[i].element_wise_min(node->aabb.min);
     }
@@ -71,10 +80,14 @@ int main(int argc, char **argv) {
     // Partition
     left_buf.clear();
     right_buf.clear();
-    for (size_t i = node->first; i < (node->first + node->count); i++) {
-      if (vertices[i][split_axis] < split_value) {
+    for (size_t i = node->first; i < (node->first + node->count); i++)
+    {
+      if (vertices[i][split_axis] < split_value)
+      {
         left_buf.push_back(vertices[i]);
-      } else {
+      }
+      else
+      {
         right_buf.push_back(vertices[i]);
       }
     }

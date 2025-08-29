@@ -1,6 +1,6 @@
-#include <vector>
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 #include "vec.hpp"
 
