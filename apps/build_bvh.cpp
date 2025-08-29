@@ -12,6 +12,20 @@ template <typename T, size_t N> struct Node {
 
 using Node3f = Node<float, 3>;
 
+void free_tree(Node3f *root) {
+  std::vector<Node3f *> stack;
+  stack.push_back(root);
+  while (!stack.empty()) {
+    auto node = stack.back();
+    stack.pop_back();
+    if (node->left && node->right) {
+      stack.push_back(node->left);
+      stack.push_back(node->right);
+    }
+    delete node;
+  }
+}
+
 int main(int argc, char **argv) {
 
   if (argc != 2) {
@@ -92,16 +106,6 @@ int main(int argc, char **argv) {
     stack.push_back(right);
   }
 
-  stack.push_back(root);
-  while (!stack.empty()) {
-    auto node = stack.back();
-    stack.pop_back();
-    std::cout << node->first << " " << node->count << std::endl;
-    if (node->left && node->right) {
-      stack.push_back(node->left);
-      stack.push_back(node->right);
-    }
-  }
-
+  free_tree(root);
   return 0;
 }
