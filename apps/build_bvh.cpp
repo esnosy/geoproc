@@ -31,17 +31,8 @@ void free_tree(Node3f *root)
   }
 }
 
-int main(int argc, char **argv)
+Node3f *build_tree(std::vector<Vec3f> &vertices)
 {
-
-  if (argc != 2)
-  {
-    std::cerr << "Expected arguments: /path/to/mesh.stl" << std::endl;
-    return 1;
-  }
-  const char *input_filepath = argv[1];
-  auto vertices = read_stl(input_filepath);
-
   auto *root = new Node3f;
   root->left = nullptr;
   root->right = nullptr;
@@ -118,7 +109,20 @@ int main(int argc, char **argv)
     stack.push_back(left);
     stack.push_back(right);
   }
+}
 
+int main(int argc, char **argv)
+{
+
+  if (argc != 2)
+  {
+    std::cerr << "Expected arguments: /path/to/mesh.stl" << std::endl;
+    return 1;
+  }
+  const char *input_filepath = argv[1];
+  auto vertices = read_stl(input_filepath);
+  // TODO: build BVH for other types
+  auto root = build_tree(vertices);
   free_tree(root);
   return 0;
 }
