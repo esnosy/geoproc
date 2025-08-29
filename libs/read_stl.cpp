@@ -45,7 +45,6 @@ std::vector<Vec3f> read_stl(const char *input_filepath)
         {
             if (token == "vertex")
             {
-                float x = 0.0f, y = 0.0f, z = 0.0f;
                 ifs >> token;
                 fast_float::from_chars(token.data(), token.data() + token.size(), x);
                 ifs >> token;
