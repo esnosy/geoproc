@@ -5,8 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
-
-#include <gl/GL.h>
+#include <GL/gl.h>
 
 // Global variables
 
@@ -18,9 +17,13 @@ static TCHAR szTitle[] = _T("Windows Desktop Guided Tour Application");
 
 // Stored instance handle for use in Win32 API calls such as FindResource
 HINSTANCE hInst;
+HDC hdc = NULL;
+HGLRC hglrc = NULL;
 
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+void EnableOpenGL(HWND hWnd, HDC* hDC, HGLRC* hRC);
+void DisableOpenGL(HWND hWnd, HDC hDC, HGLRC hRC);
 
 int WINAPI WinMain(
     _In_ HINSTANCE hInstance,
@@ -31,17 +34,17 @@ int WINAPI WinMain(
     WNDCLASSEX wcex;
 
     wcex.cbSize = sizeof(WNDCLASSEX);
-    wcex.style = CS_HREDRAW | CS_VREDRAW;
+    wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     wcex.lpfnWndProc = WndProc;
     wcex.cbClsExtra = 0;
     wcex.cbWndExtra = 0;
     wcex.hInstance = hInstance;
-    wcex.hIcon = LoadIcon(wcex.hInstance, IDI_APPLICATION);
+    wcex.hIcon = LoadIcon(NULL, IDI_APPLICATION);
     wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
     wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wcex.lpszMenuName = NULL;
     wcex.lpszClassName = szWindowClass;
-    wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
+    wcex.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
 
     if (!RegisterClassEx(&wcex))
     {
@@ -73,7 +76,7 @@ int WINAPI WinMain(
         szTitle,
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT,
-        500, 100,
+        500, 500,
         NULL,
         NULL,
         hInstance,
@@ -89,11 +92,13 @@ int WINAPI WinMain(
         return 1;
     }
 
+    // Initialize OpenGL
+    EnableOpenGL(hWnd, &hdc, &hglrc);
+
     // The parameters to ShowWindow explained:
     // hWnd: the value returned from CreateWindow
     // nCmdShow: the fourth parameter from WinMain
-    ShowWindow(hWnd,
-               nCmdShow);
+    ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
 
     // Main message loop:
@@ -104,6 +109,9 @@ int WINAPI WinMain(
         DispatchMessage(&msg);
     }
 
+    // Cleanup OpenGL
+    DisableOpenGL(hWnd, hdc, hglrc);
+
     return (int)msg.wParam;
 }
 
@@ -111,36 +119,75 @@ int WINAPI WinMain(
 //
 //  PURPOSE:  Processes messages for the main window.
 //
-//  WM_PAINT    - Paint the main window
-//  WM_DESTROY  - post a quit message and return
+//  WM_PAINT  - Paint the main window
+//  WM_DESTROY - post a quit message and return
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    PAINTSTRUCT ps;
-    HDC hdc;
-    TCHAR greeting[] = _T("Hello, Windows desktop!");
-
     switch (message)
     {
     case WM_PAINT:
-        hdc = BeginPaint(hWnd, &ps);
+        {
+            PAINTSTRUCT ps;
+            BeginPaint(hWnd, &ps);
+            
+            // OpenGL rendering
+            glClearColor(0.0f, 0.0f, 0.4f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
 
-        // Here your application is laid out.
-        // For this introduction, we just print out "Hello, Windows desktop!"
-        // in the top left corner.
-        TextOut(hdc,
-                5, 5,
-                greeting, _tcslen(greeting));
-        // End application-specific layout section.
+            // A triangle with a different color for each vertex.
+            glBegin(GL_TRIANGLES);
+                glColor3f(1.0f, 0.0f, 0.0f);
+                glVertex2f(-0.5f, -0.5f);
+                glColor3f(0.0f, 1.0f, 0.0f);
+                glVertex2f(0.5f, -0.5f);
+                glColor3f(0.0f, 0.0f, 1.0f);
+                glVertex2f(0.0f, 0.5f);
+            glEnd();
 
-        EndPaint(hWnd, &ps);
+            glFlush();
+            SwapBuffers(hdc);
+
+            EndPaint(hWnd, &ps);
+        }
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
-        break;
     }
 
     return 0;
+}
+
+void EnableOpenGL(HWND hWnd, HDC* hDC, HGLRC* hRC)
+{
+    PIXELFORMATDESCRIPTOR pfd;
+    int iFormat;
+
+    // get the device context (DC)
+    *hDC = GetDC(hWnd);
+
+    // set the pixel format for the DC
+    ZeroMemory(&pfd, sizeof(pfd));
+    pfd.nSize = sizeof(pfd);
+    pfd.nVersion = 1;
+    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+    pfd.iPixelType = PFD_TYPE_RGBA;
+    pfd.cColorBits = 24;
+    pfd.cDepthBits = 16;
+    pfd.iLayerType = PFD_MAIN_PLANE;
+    iFormat = ChoosePixelFormat(*hDC, &pfd);
+    SetPixelFormat(*hDC, iFormat, &pfd);
+
+    // create and enable the render context (RC)
+    *hRC = wglCreateContext(*hDC);
+    wglMakeCurrent(*hDC, *hRC);
+}
+
+void DisableOpenGL(HWND hWnd, HDC hDC, HGLRC hRC)
+{
+    wglMakeCurrent(NULL, NULL);
+    wglDeleteContext(hRC);
+    ReleaseDC(hWnd, hDC);
 }
