@@ -50,7 +50,7 @@ int main(int argc, char **argv)
       << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count()
       << "ms" << std::endl;
 
-  std::cout << vertices.size() << std::endl;
+  std::cout << "Num vertices: " << vertices.size() << std::endl;
 
   // Calculate triangle areas
 
