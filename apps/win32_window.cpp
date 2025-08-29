@@ -22,7 +22,7 @@ HGLRC hglrc = NULL;
 
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-void EnableOpenGL(HWND hWnd, HDC* hDC, HGLRC* hRC);
+void EnableOpenGL(HWND hWnd, HDC *hDC, HGLRC *hRC);
 void DisableOpenGL(HWND hWnd, HDC hDC, HGLRC hRC);
 
 int WINAPI WinMain(
@@ -126,30 +126,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            BeginPaint(hWnd, &ps);
-            
-            // OpenGL rendering
-            glClearColor(0.0f, 0.0f, 0.4f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
+    {
+        PAINTSTRUCT ps;
+        BeginPaint(hWnd, &ps);
 
-            // A triangle with a different color for each vertex.
-            glBegin(GL_TRIANGLES);
-                glColor3f(1.0f, 0.0f, 0.0f);
-                glVertex2f(-0.5f, -0.5f);
-                glColor3f(0.0f, 1.0f, 0.0f);
-                glVertex2f(0.5f, -0.5f);
-                glColor3f(0.0f, 0.0f, 1.0f);
-                glVertex2f(0.0f, 0.5f);
-            glEnd();
+        // OpenGL rendering
+        glClearColor(0.0f, 0.0f, 0.4f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-            glFlush();
-            SwapBuffers(hdc);
+        // A triangle with a different color for each vertex.
+        glBegin(GL_TRIANGLES);
+        glColor3f(1.0f, 0.0f, 0.0f);
+        glVertex2f(-0.5f, -0.5f);
+        glColor3f(0.0f, 1.0f, 0.0f);
+        glVertex2f(0.5f, -0.5f);
+        glColor3f(0.0f, 0.0f, 1.0f);
+        glVertex2f(0.0f, 0.5f);
+        glEnd();
 
-            EndPaint(hWnd, &ps);
-        }
-        break;
+        glFlush();
+        SwapBuffers(hdc);
+
+        EndPaint(hWnd, &ps);
+    }
+    break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
@@ -160,7 +160,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-void EnableOpenGL(HWND hWnd, HDC* hDC, HGLRC* hRC)
+void EnableOpenGL(HWND hWnd, HDC *hDC, HGLRC *hRC)
 {
     PIXELFORMATDESCRIPTOR pfd;
     int iFormat;
