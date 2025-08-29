@@ -47,11 +47,11 @@ std::vector<Vec3f> read_stl(const char *input_filepath)
             {
                 float x = 0.0f, y = 0.0f, z = 0.0f;
                 ifs >> token;
-                fast_float::from_chars(token.c_str(), token.c_str() + token.size(), x);
+                fast_float::from_chars(token.data(), token.data() + token.size(), x);
                 ifs >> token;
-                fast_float::from_chars(token.c_str(), token.c_str() + token.size(), y);
+                fast_float::from_chars(token.data(), token.data() + token.size(), y);
                 ifs >> token;
-                fast_float::from_chars(token.c_str(), token.c_str() + token.size(), z);
+                fast_float::from_chars(token.data(), token.data() + token.size(), z);
 
                 vertices.push_back({x, y, z});
             }
