@@ -109,6 +109,7 @@ Node3f *build_tree(std::vector<Vec3f> &vertices)
     stack.push_back(left);
     stack.push_back(right);
   }
+  return root;
 }
 
 int main(int argc, char **argv)
