@@ -1,15 +1,12 @@
-#include <cmath>
-#include <cstdint>
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <random>
 #include <string>
-#include <vector>
 #include <utility>
-#include <chrono>
 
-#include "../libs/vec3.hpp"
 #include "../libs/read_stl.hpp"
+#include "../libs/vec3.hpp"
 
 // https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations#SamplingaTriangle
 std::pair<float, float> uniform_sample_triangle(float u, float v)
@@ -37,7 +34,8 @@ int main(int argc, char *argv[])
   auto vertices = read_stl(input_path);
   auto t1 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> ms = t1 - t0;
-  std::cout << "Read " << vertices.size() << " vertices in " << ms.count() << "ms" << std::endl;
+  std::cout << "Read " << vertices.size() << " vertices in " << ms.count()
+            << "ms" << std::endl;
 
   std::ofstream ofs(output_path, std::ofstream::binary);
   ofs << "ply\n";
