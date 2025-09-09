@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
   ofs << "end_header\n";
 
   std::vector<float> triangle_areas;
+  triangle_areas.reserve(vertices.size() / 3);
 
   for (size_t ti = 0; ti < vertices.size(); ti += 3)
   {
