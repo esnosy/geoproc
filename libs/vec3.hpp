@@ -19,5 +19,5 @@ struct vec3
             x * rhs.y - y * rhs.x};
   }
   vec3 operator*(const float &rhs) const { return {x * rhs, y * rhs, z * rhs}; }
-  float magnitude() const { return sqrt(x * x + y * y + z * z); }
+  float magnitude() const { return std::sqrt(x * x + y * y + z * z); }
 };
