@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <chrono>
 
 #include "../libs/vec3.hpp"
 #include "../libs/read_stl.hpp"
@@ -32,8 +33,11 @@ int main(int argc, char *argv[])
   size_t num_samples = std::stoull(argv[2]);
   const char *output_path = argv[3];
 
+  auto t0 = std::chrono::high_resolution_clock::now();
   auto vertices = read_stl(input_path);
-  std::cout << vertices.size() << std::endl;
+  auto t1 = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> ms = t1 - t0;
+  std::cout << "Read " << vertices.size() << " vertices in " << ms.count() << "ms" << std::endl;
 
   std::ofstream ofs(output_path, std::ofstream::binary);
   ofs << "ply\n";
