@@ -10,9 +10,7 @@
 std::vector<vec3> read_stl(const char *path)
 {
 
-  std::ifstream ifs;
-  ifs.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-  ifs.open(path, std::ifstream::binary);
+  std::ifstream ifs(path, std::ifstream::binary);
 
   // Assume binary STL and skip the 80 bytes header
   ifs.seekg(80, ifs.beg);
