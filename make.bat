@@ -1,1 +1,0 @@
-cl /EHsc /std:c++20 /O2 apps/sample_surface.cpp libs/read_stl.cpp
