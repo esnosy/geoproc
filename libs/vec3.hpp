@@ -20,4 +20,7 @@ struct vec3
   }
   vec3 operator*(const float &rhs) const { return {x * rhs, y * rhs, z * rhs}; }
   float magnitude() const { return std::sqrt(x * x + y * y + z * z); }
+
+  vec3 min(const vec3 &rhs) const { return {std::min(x, rhs.x), std::min(y, rhs.y), std::min(z, rhs.z)}; }
+  vec3 max(const vec3 &rhs) const { return {std::max(x, rhs.x), std::max(y, rhs.y), std::max(z, rhs.z)}; }
 };
