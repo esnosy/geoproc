@@ -96,6 +96,8 @@ int main(int argc, char *argv[])
         stack.push_back(right);
     }
 
+    size_t num_nodes = 0;
+
     stack.push_back(root);
     while (!stack.empty())
     {
@@ -103,6 +105,7 @@ int main(int argc, char *argv[])
         stack.pop_back();
 
         // std::cout << node->aabb.lower << " " << node->aabb.upper << std::endl;
+        num_nodes++;
 
         if (node->left)
             stack.push_back(node->left);
@@ -110,5 +113,8 @@ int main(int argc, char *argv[])
             stack.push_back(node->right);
     }
 
-    std::cout << "FOOOOOOOOOOO" << std::endl;
+    std::cout << "Num nodes: " << num_nodes << std::endl;
+    std::cout << "Num primitives: " << aabbs.size() << std::endl;
+    std::cout << "Predicted num nodes: " << 2 * aabbs.size() - 1 << std::endl;
+    std::cout << ((2 * aabbs.size() - 1) == num_nodes) << std::endl;
 }
