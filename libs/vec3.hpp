@@ -24,3 +24,9 @@ struct vec3
   vec3 min(const vec3 &rhs) const { return {std::min(x, rhs.x), std::min(y, rhs.y), std::min(z, rhs.z)}; }
   vec3 max(const vec3 &rhs) const { return {std::max(x, rhs.x), std::max(y, rhs.y), std::max(z, rhs.z)}; }
 };
+
+static std::ostream &operator<<(std::ostream &os, const vec3 &obj)
+{
+  os << "(" << obj.x << ", " << obj.y << ", " << obj.z << ")";
+  return os;
+}
