@@ -37,6 +37,8 @@ int main(int argc, char *argv[])
   std::cout << "Read " << vertices.size() << " vertices in " << ms.count()
             << "ms" << std::endl;
 
+  t0 = std::chrono::high_resolution_clock::now();
+
   std::ofstream ofs(output_path, std::ofstream::binary);
   ofs << "ply\n";
   ofs << "format binary_little_endian 1.0\n";
@@ -82,6 +84,11 @@ int main(int argc, char *argv[])
 
     ofs.write(reinterpret_cast<char *>(&p), sizeof(vec3));
   }
+
+  t1 = std::chrono::high_resolution_clock::now();
+  ms = t1 - t0;
+  std::cout << "Wrote " << num_samples << " samples in " << ms.count()
+            << "ms" << std::endl;
 
   return 0;
 }
