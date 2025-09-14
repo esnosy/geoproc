@@ -8,6 +8,12 @@
 struct AABB
 {
     vec3 upper, lower;
+    AABB join(const AABB &rhs) const
+    {
+        return {
+            upper.max(rhs.upper),
+            lower.min(rhs.lower)};
+    }
 };
 
 struct Node
@@ -63,10 +69,9 @@ int main(int argc, char *argv[])
         stack.pop_back();
 
         node->aabb = aabbs[0];
-        for (size_t i = node->first; i < node->count; i++)
+        for (size_t i = node->first; i < node->first + node->count; i++)
         {
-            node->aabb.lower = aabbs[i].lower.min(node->aabb.lower);
-            node->aabb.upper = aabbs[i].upper.max(node->aabb.upper);
+            node->aabb = node->aabb.join(aabbs[i]);
         }
 
         if (node->count < 2)
@@ -89,6 +94,20 @@ int main(int argc, char *argv[])
 
         stack.push_back(left);
         stack.push_back(right);
+    }
+
+    stack.push_back(root);
+    while (!stack.empty())
+    {
+        auto node = stack.back();
+        stack.pop_back();
+
+        // std::cout << node->aabb.lower << " " << node->aabb.upper << std::endl;
+
+        if (node->left)
+            stack.push_back(node->left);
+        if (node->right)
+            stack.push_back(node->right);
     }
 
     std::cout << "FOOOOOOOOOOO" << std::endl;
