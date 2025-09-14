@@ -48,7 +48,7 @@ std::vector<vec3> read_stl(const char *path)
         ifs.read(reinterpret_cast<char *>(&vertex), sizeof(vec3));
         vertices.push_back(vertex);
       }
-      ifs.seekg(2, ifs.cur); // Skip attribute byte count
+      ifs.seekg(2, ifs.cur); // Skip "attribute byte count"
     }
   }
   else
