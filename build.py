@@ -4,11 +4,8 @@ import sys
 
 debug = False
 
-if len(sys.argv) == 2:
-    if sys.argv[1] == "--debug":
-        debug = True
-elif len(sys.argv) == 1:
-    pass
+if len(sys.argv) == 2 and sys.argv[1] == "--debug":
+    debug = True
 else:
     print("Usage: python build.py [--debug]")
     sys.exit(1)
