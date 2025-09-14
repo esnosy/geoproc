@@ -6,6 +6,8 @@ debug = False
 
 if len(sys.argv) == 2 and sys.argv[1] == "--debug":
     debug = True
+elif len(sys.argv) == 1:
+    pass
 else:
     print("Usage: python build.py [--debug]")
     sys.exit(1)
