@@ -67,10 +67,5 @@ std::vector<vec3> read_stl(const char *path)
     }
   }
 
-  if (vertices.size() % 3 != 0)
-  {
-    throw std::runtime_error("Invalid STL file");
-  }
-
   return vertices;
 }
