@@ -8,10 +8,6 @@
 struct AABB
 {
     vec3 upper, lower;
-    AABB join(const AABB &rhs) const
-    {
-        return {upper.max(rhs.upper), lower.min(rhs.lower)};
-    }
 };
 
 struct Node
@@ -41,13 +37,11 @@ int main(int argc, char *argv[])
               << "ms" << std::endl;
 
     std::vector<AABB> aabbs(vertices.size() / 3);
-
     for (size_t i = 0; i < vertices.size(); i += 3)
     {
         auto a = vertices[i];
         auto b = vertices[i + 1];
         auto c = vertices[i + 2];
-
         AABB aabb;
         aabb.upper = a.max(b).max(c);
         aabb.lower = a.min(b).min(c);
@@ -55,7 +49,8 @@ int main(int argc, char *argv[])
     }
 
     auto root = new Node;
-    root->left = root->right = nullptr;
+    root->left = nullptr;
+    root->right = nullptr;
     root->first = 0;
     root->count = aabbs.size();
 
@@ -67,28 +62,34 @@ int main(int argc, char *argv[])
         auto node = stack.back();
         stack.pop_back();
 
-        node->aabb = aabbs[node->first];
-        for (size_t i = node->first + 1; node->first + node->count; i++)
+        node->aabb = aabbs[0];
+        for (size_t i = node->first; i < node->count; i++)
         {
-            node->aabb = node->aabb.join(aabbs[i]);
+            node->aabb.lower = aabbs[i].lower.min(node->aabb.lower);
+            node->aabb.upper = aabbs[i].upper.max(node->aabb.upper);
         }
 
-        if (node->count == 1)
+        if (node->count < 2)
             continue;
 
         auto left = new Node;
-        left->left = left->right = nullptr;
+        left->left = nullptr;
+        left->right = nullptr;
         left->first = node->first;
         left->count = node->count / 2;
 
         auto right = new Node;
-        right->left = right->right = nullptr;
-        right->first = node->first + left->count;
+        right->left = nullptr;
+        right->right = nullptr;
+        right->first = left->first + left->count;
         right->count = node->count - left->count;
 
         node->left = left;
         node->right = right;
+
         stack.push_back(left);
         stack.push_back(right);
     }
+
+    std::cout << "FOOOOOOOOOOO" << std::endl;
 }
