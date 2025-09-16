@@ -74,11 +74,12 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest --build-config ${{ matrix.build_type }}
 
-    - name: Release
-      uses: softprops/action-gh-release@v2
-      # if: github.ref_type == 'tag'
+    - uses: actions/upload-artifact@v4
       with:
-        # note you'll typically need to create a personal access token
-        # with permissions to create releases in the other repo
-        # token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
-        files: ${{ steps.strings.outputs.build-output-dir }}/*
+        # Name of the artifact to upload.
+        # Optional. Default is 'artifact'
+        name: build
+
+        # A file, directory or wildcard pattern that describes what to upload
+        # Required.
+        path: ${{ steps.strings.outputs.build-output-dir }}
