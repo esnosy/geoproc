@@ -78,7 +78,7 @@ jobs:
       with:
         # Name of the artifact to upload.
         # Optional. Default is 'artifact'
-        name: build
+        name: build-${{ matrix.c_compiler }}
 
         # A file, directory or wildcard pattern that describes what to upload
         # Required.
