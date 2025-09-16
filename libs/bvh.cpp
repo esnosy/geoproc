@@ -3,6 +3,7 @@
 #include "vec3.hpp"
 #include "bvh.hpp"
 
+// Thanks to: https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/
 Node *build_bvh(const std::vector<AABB> &aabbs)
 {
     auto root = new Node;
