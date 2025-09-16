@@ -28,6 +28,15 @@ struct Node
     size_t first, count;
 };
 
+void delete_tree(Node *node)
+{
+    if (!node)
+        return;
+    delete_tree(node->left);
+    delete_tree(node->right);
+    delete node;
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -159,6 +168,8 @@ int main(int argc, char *argv[])
         if (node->right)
             stack.push_back(node->right);
     }
+
+    delete_tree(root);
 
     std::cout << "Num nodes: " << num_nodes << std::endl;
     std::cout << "Num primitives: " << aabbs.size() << std::endl;
