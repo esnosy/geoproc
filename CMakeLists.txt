@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(HelloWorld CXX)
+project(GeoProc CXX)
 
 add_executable(sample_surface apps/sample_surface.cpp libs/read_stl.cpp)
 target_compile_features(sample_surface PRIVATE cxx_std_20)
