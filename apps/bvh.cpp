@@ -14,6 +14,11 @@ struct AABB
             upper.max(rhs.upper),
             lower.min(rhs.lower)};
     }
+    float calc_center_axis(int i) const
+    {
+        return (upper[i] + lower[i]) * 0.5f;
+    }
+    vec3 calc_extent() const { return upper - lower; }
 };
 
 struct Node
@@ -42,7 +47,8 @@ int main(int argc, char *argv[])
     std::cout << "Read " << vertices.size() << " vertices in " << ms.count()
               << "ms" << std::endl;
 
-    std::vector<AABB> aabbs(vertices.size() / 3);
+    std::vector<AABB> aabbs;
+    aabbs.reserve(vertices.size() / 3);
     for (size_t i = 0; i < vertices.size(); i += 3)
     {
         auto a = vertices[i];
@@ -63,25 +69,67 @@ int main(int argc, char *argv[])
     std::vector<Node *> stack;
     stack.push_back(root);
 
+    std::vector<size_t> left_partition_buf;
+    std::vector<size_t> right_partition_buf;
+
+    left_partition_buf.reserve(aabbs.size());
+    right_partition_buf.reserve(aabbs.size());
+
+    std::vector<size_t> indices;
+    indices.reserve(aabbs.size());
+    for (size_t i = 0; i < aabbs.size(); i++)
+    {
+        indices.push_back(i);
+    }
+
     while (!stack.empty())
     {
         auto node = stack.back();
         stack.pop_back();
 
-        node->aabb = aabbs[0];
-        for (size_t i = node->first; i < node->first + node->count; i++)
+        node->aabb = aabbs[indices[node->first]];
+        for (size_t i = node->first + 1; i < node->first + node->count; i++)
         {
-            node->aabb = node->aabb.join(aabbs[i]);
+            node->aabb = node->aabb.join(aabbs[indices[i]]);
         }
 
         if (node->count < 2)
+            continue;
+
+        vec3 extent = node->aabb.calc_extent();
+
+        int split_axis = 0;
+        if (extent[1] > extent[split_axis])
+            split_axis = 1;
+        if (extent[2] > extent[split_axis])
+            split_axis = 2;
+
+        float split_value = node->aabb.calc_center_axis(split_axis);
+
+        for (size_t i = node->first + 1; i < node->first + node->count; i++)
+        {
+            auto center = aabbs[indices[i]].calc_center_axis(split_axis);
+            if (center < split_value)
+            {
+                left_partition_buf.push_back(indices[i]);
+            }
+            else
+            {
+                right_partition_buf.push_back(indices[i]);
+            }
+        }
+
+        if (left_partition_buf.empty() || right_partition_buf.empty())
             continue;
 
         auto left = new Node;
         left->left = nullptr;
         left->right = nullptr;
         left->first = node->first;
-        left->count = node->count / 2;
+        left->count = left_partition_buf.size();
+
+        left_partition_buf.clear();
+        right_partition_buf.clear();
 
         auto right = new Node;
         right->left = nullptr;
@@ -104,7 +152,6 @@ int main(int argc, char *argv[])
         auto node = stack.back();
         stack.pop_back();
 
-        // std::cout << node->aabb.lower << " " << node->aabb.upper << std::endl;
         num_nodes++;
 
         if (node->left)
