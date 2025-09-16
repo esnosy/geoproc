@@ -6,10 +6,10 @@
 #include "../libs/bvh.hpp"
 #include "../libs/read_stl.hpp"
 
-size_t count_nodes(Node *root)
+size_t count_nodes(BVH_Node *root)
 {
     size_t num_nodes = 0;
-    std::vector<Node *> stack;
+    std::vector<BVH_Node *> stack;
     stack.push_back(root);
     while (!stack.empty())
     {
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
         aabbs.push_back(aabb);
     }
 
-    Node *root = build_bvh(aabbs);
+    BVH_Node *root = build_bvh(aabbs);
     size_t num_nodes = count_nodes(root);
     delete_tree(root);
 

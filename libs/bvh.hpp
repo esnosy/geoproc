@@ -21,12 +21,12 @@ struct AABB
     }
 };
 
-struct Node
+struct BVH_Node
 {
     AABB aabb;
-    Node *left, *right;
+    BVH_Node *left, *right;
     size_t first, count;
 };
 
-Node *build_bvh(const std::vector<AABB> &aabbs);
-void delete_tree(Node *node);
+BVH_Node *build_bvh(const std::vector<AABB> &aabbs);
+void delete_tree(BVH_Node *node);

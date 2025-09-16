@@ -4,15 +4,15 @@
 #include "vec3.hpp"
 
 // Thanks to: https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/
-Node *build_bvh(const std::vector<AABB> &aabbs)
+BVH_Node *build_bvh(const std::vector<AABB> &aabbs)
 {
-    auto root = new Node;
+    auto root = new BVH_Node;
     root->left = nullptr;
     root->right = nullptr;
     root->first = 0;
     root->count = aabbs.size();
 
-    std::vector<Node *> stack;
+    std::vector<BVH_Node *> stack;
     stack.push_back(root);
 
     std::vector<size_t> left_partition_buf;
@@ -78,7 +78,7 @@ Node *build_bvh(const std::vector<AABB> &aabbs)
             indices[node->first + left_partition_buf.size() + i] = right_partition_buf[i];
         }
 
-        auto left = new Node;
+        auto left = new BVH_Node;
         left->left = nullptr;
         left->right = nullptr;
         left->first = node->first;
@@ -87,7 +87,7 @@ Node *build_bvh(const std::vector<AABB> &aabbs)
         left_partition_buf.clear();
         right_partition_buf.clear();
 
-        auto right = new Node;
+        auto right = new BVH_Node;
         right->left = nullptr;
         right->right = nullptr;
         right->first = left->first + left->count;
@@ -102,7 +102,7 @@ Node *build_bvh(const std::vector<AABB> &aabbs)
     return root;
 }
 
-void delete_tree(Node *node)
+void delete_tree(BVH_Node *node)
 {
     if (!node)
         return;
