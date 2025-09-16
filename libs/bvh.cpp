@@ -52,7 +52,7 @@ Node *build_bvh(const std::vector<AABB> &aabbs)
 
         float split_value = node->aabb.calc_center_axis(split_axis);
 
-        for (size_t i = node->first + 1; i < node->first + node->count; i++)
+        for (size_t i = node->first; i < node->first + node->count; i++)
         {
             size_t remapped_index = indices[i];
             auto center = aabbs[remapped_index].calc_center_axis(split_axis);
@@ -68,6 +68,15 @@ Node *build_bvh(const std::vector<AABB> &aabbs)
 
         if (left_partition_buf.empty() || right_partition_buf.empty())
             continue;
+
+        for (size_t i = 0; i < left_partition_buf.size(); i++)
+        {
+            indices[node->first + i] = left_partition_buf[i];
+        }
+        for (size_t i = 1; i < right_partition_buf.size(); i++)
+        {
+            indices[node->first + left_partition_buf.size() + i] = right_partition_buf[i];
+        }
 
         auto left = new Node;
         left->left = nullptr;
