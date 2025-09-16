@@ -9,15 +9,16 @@ struct AABB
     vec3 upper, lower;
     AABB join(const AABB &rhs) const
     {
-        return {
-            upper.max(rhs.upper),
-            lower.min(rhs.lower)};
+        return {upper.max(rhs.upper), lower.min(rhs.lower)};
     }
     float calc_center_axis(int i) const
     {
         return (upper[i] + lower[i]) * 0.5f;
     }
-    vec3 calc_extent() const { return upper - lower; }
+    vec3 calc_extent() const
+    {
+        return upper - lower;
+    }
 };
 
 struct Node

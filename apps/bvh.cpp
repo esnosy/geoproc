@@ -1,18 +1,17 @@
-#include <iostream>
 #include <chrono>
+#include <iostream>
 #include <string>
 #include <vector>
 
-#include "../libs/read_stl.hpp"
 #include "../libs/bvh.hpp"
+#include "../libs/read_stl.hpp"
 
 int main(int argc, char *argv[])
 {
 
     if (argc != 2)
     {
-        std::cerr << "Expected arguments: /path/to/input.stl"
-                  << std::endl;
+        std::cerr << "Expected arguments: /path/to/input.stl" << std::endl;
         return 1;
     }
 
@@ -22,8 +21,7 @@ int main(int argc, char *argv[])
     auto vertices = read_stl(input_path);
     auto t1 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> ms = t1 - t0;
-    std::cout << "Read " << vertices.size() << " vertices in " << ms.count()
-              << "ms" << std::endl;
+    std::cout << "Read " << vertices.size() << " vertices in " << ms.count() << "ms" << std::endl;
 
     std::vector<AABB> aabbs;
     aabbs.reserve(vertices.size() / 3);
