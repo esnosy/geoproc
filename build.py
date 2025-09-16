@@ -27,4 +27,4 @@ def build_exe(soruces: list[str], output: str):
 
 
 build_exe(["apps/sample_surface.cpp", "libs/read_stl.cpp"], "sample_surface")
-build_exe(["apps/bvh.cpp", "libs/read_stl.cpp"], "bvh")
+build_exe(["apps/bvh.cpp", "libs/read_stl.cpp", "libs/bvh_lib.cpp"], "bvh")
