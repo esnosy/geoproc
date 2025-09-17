@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 
         auto p = ca * s + cb * t + c;
 
-        ofs.write(reinterpret_cast<char *>(&p), sizeof(vec3));
+        ofs.write(reinterpret_cast<char *>(&p), sizeof(Vec3));
     }
 
     t1 = std::chrono::high_resolution_clock::now();

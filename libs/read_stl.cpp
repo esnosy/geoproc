@@ -6,7 +6,7 @@
 
 #include "vec3.hpp"
 
-std::vector<vec3> read_stl(const char *path)
+std::vector<Vec3> read_stl(const char *path)
 {
 
     std::ifstream ifs(path, std::ifstream::binary);
@@ -32,7 +32,7 @@ std::vector<vec3> read_stl(const char *path)
     ifs.seekg(0, ifs.end);
     uint64_t actual_file_size = ifs.tellg();
 
-    std::vector<vec3> vertices;
+    std::vector<Vec3> vertices;
 
     if (actual_file_size == expected_file_size)
     {
@@ -43,8 +43,8 @@ std::vector<vec3> read_stl(const char *path)
             ifs.seekg(12, ifs.cur); // Skip normal vector
             for (int j = 0; j < 3; j++)
             {
-                vec3 vertex;
-                ifs.read(reinterpret_cast<char *>(&vertex), sizeof(vec3));
+                Vec3 vertex;
+                ifs.read(reinterpret_cast<char *>(&vertex), sizeof(Vec3));
                 vertices.push_back(vertex);
             }
             ifs.seekg(2, ifs.cur); // Skip "attribute byte count"
@@ -59,7 +59,7 @@ std::vector<vec3> read_stl(const char *path)
         {
             if (token == "vertex")
             {
-                vec3 vertex;
+                Vec3 vertex;
                 ifs >> vertex.x >> vertex.y >> vertex.z;
                 vertices.push_back(vertex);
             }

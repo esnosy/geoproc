@@ -42,7 +42,7 @@ BVH_Node *build_bvh(const std::vector<AABB> &aabbs)
         if (node->count < 2)
             continue;
 
-        vec3 extent = node->aabb.calc_extent();
+        Vec3 extent = node->aabb.calc_extent();
 
         int split_axis = 0;
         if (extent[1] > extent[split_axis])

@@ -3,22 +3,22 @@
 #include <cmath>
 #include <iostream>
 
-struct vec3
+struct Vec3
 {
     float x, y, z;
-    vec3 operator+(const vec3 &rhs) const
+    Vec3 operator+(const Vec3 &rhs) const
     {
         return {x + rhs.x, y + rhs.y, z + rhs.z};
     }
-    vec3 operator-(const vec3 &rhs) const
+    Vec3 operator-(const Vec3 &rhs) const
     {
         return {x - rhs.x, y - rhs.y, z - rhs.z};
     }
-    vec3 cross(const vec3 &rhs) const
+    Vec3 cross(const Vec3 &rhs) const
     {
         return {y * rhs.z - z * rhs.y, z * rhs.x - x * rhs.z, x * rhs.y - y * rhs.x};
     }
-    vec3 operator*(const float &rhs) const
+    Vec3 operator*(const float &rhs) const
     {
         return {x * rhs, y * rhs, z * rhs};
     }
@@ -27,11 +27,11 @@ struct vec3
         return std::sqrt(x * x + y * y + z * z);
     }
 
-    vec3 min(const vec3 &rhs) const
+    Vec3 min(const Vec3 &rhs) const
     {
         return {std::min(x, rhs.x), std::min(y, rhs.y), std::min(z, rhs.z)};
     }
-    vec3 max(const vec3 &rhs) const
+    Vec3 max(const Vec3 &rhs) const
     {
         return {std::max(x, rhs.x), std::max(y, rhs.y), std::max(z, rhs.z)};
     }
@@ -41,7 +41,7 @@ struct vec3
     }
 };
 
-static std::ostream &operator<<(std::ostream &os, const vec3 &obj)
+static std::ostream &operator<<(std::ostream &os, const Vec3 &obj)
 {
     os << "(" << obj.x << ", " << obj.y << ", " << obj.z << ")";
     return os;
