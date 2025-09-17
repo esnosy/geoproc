@@ -6,6 +6,26 @@
 #include "../libs/bvh.hpp"
 #include "../libs/read_stl.hpp"
 
+size_t max_primitives_count(BVH_Node *root)
+{
+    size_t result = 0;
+    std::vector<BVH_Node *> stack;
+    stack.push_back(root);
+    while (!stack.empty())
+    {
+        auto node = stack.back();
+        stack.pop_back();
+
+        result = std::max(result, node->count);
+
+        if (node->left)
+            stack.push_back(node->left);
+        if (node->right)
+            stack.push_back(node->right);
+    }
+    return result;
+}
+
 size_t count_nodes(BVH_Node *root)
 {
     size_t num_nodes = 0;
@@ -58,10 +78,13 @@ int main(int argc, char *argv[])
 
     BVH_Node *root = build_bvh(aabbs);
     size_t num_nodes = count_nodes(root);
-    delete_tree(root);
 
     std::cout << "Num nodes: " << num_nodes << std::endl;
     std::cout << "Num primitives: " << aabbs.size() << std::endl;
     std::cout << "Predicted num nodes: " << 2 * aabbs.size() - 1 << std::endl;
     std::cout << ((2 * aabbs.size() - 1) == num_nodes) << std::endl;
+
+    std::cout << "Max primitives count: " << max_primitives_count(root) << std::endl;
+
+    delete_tree(root);
 }
