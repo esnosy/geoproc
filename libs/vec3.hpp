@@ -35,7 +35,11 @@ struct Vec3
     {
         return {std::max(x, rhs.x), std::max(y, rhs.y), std::max(z, rhs.z)};
     }
-    float operator[](int i) const
+    float &operator[](int i)
+    {
+        return (&x)[i];
+    }
+    const float &operator[](int i) const
     {
         return (&x)[i];
     }
