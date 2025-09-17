@@ -45,7 +45,7 @@ struct Vec3
     }
 };
 
-static std::ostream &operator<<(std::ostream &os, const Vec3 &obj)
+inline std::ostream &operator<<(std::ostream &os, const Vec3 &obj)
 {
     os << "(" << obj.x << ", " << obj.y << ", " << obj.z << ")";
     return os;
