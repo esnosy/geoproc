@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 
-#include "fast_float.h"
 #include "vec3.hpp"
 
 std::vector<Vec3> read_stl(const char *path)
@@ -61,12 +60,7 @@ std::vector<Vec3> read_stl(const char *path)
             if (token == "vertex")
             {
                 Vec3 vertex;
-                for (int i = 0; i < 3; i++)
-                {
-                    std::string s;
-                    ifs >> s;
-                    fast_float::from_chars(s.data(), s.data() + s.size(), vertex[i]);
-                }
+                ifs >> vertex.x >> vertex.y >> vertex.z;
                 vertices.push_back(vertex);
             }
         }
