@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "lib_bvh.hpp"
+#include "bvh.hpp"
 #include "vec3.hpp"
 
 // Thanks to:

@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "../libs/lib_bvh.hpp"
+#include "../libs/bvh.hpp"
 #include "../libs/read_stl.hpp"
 
 size_t max_primitives_count(BVH_Node *root) {
