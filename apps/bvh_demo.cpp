@@ -13,12 +13,12 @@ size_t max_primitives_count(BVH_Node *root) {
     auto node = stack.back();
     stack.pop_back();
 
-    result = std::max(result, node->count);
-
-    if (node->left)
+    if (node->left && node->right) {
       stack.push_back(node->left);
-    if (node->right)
       stack.push_back(node->right);
+    } else {
+      result = std::max(result, node->count);
+    }
   }
   return result;
 }
