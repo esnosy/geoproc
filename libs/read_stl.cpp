@@ -26,6 +26,16 @@ std::vector<Vec3> read_stl(const char *path) {
   //     REAL32[3] – Vertex 3              - 12 bytes
   //     UINT16    – Attribute byte count  - 02 bytes
   // end
+  // STL ASCII format spec.
+  // https://en.wikipedia.org/w/index.php?title=STL_(file_format)&oldid=1306712422#ASCII
+  // foreach triangle
+  // facet normal ni nj nk
+  //     outer loop
+  //         vertex v1x v1y v1z
+  //         vertex v2x v2y v2z
+  //         vertex v3x v3y v3z
+  //     endloop
+  // endfacet
   uint64_t expected_file_size = uint64_t(possible_num_tris) * 50 + 84;
 
   ifs.seekg(0, ifs.end);
