@@ -65,7 +65,7 @@ BVH_Node *build_bvh(const std::vector<AABB> &aabbs) {
     for (size_t i = 0; i < left_partition_buf.size(); i++) {
       indices[node->first + i] = left_partition_buf[i];
     }
-    for (size_t i = 1; i < right_partition_buf.size(); i++) {
+    for (size_t i = 0; i < right_partition_buf.size(); i++) {
       indices[node->first + left_partition_buf.size() + i] =
           right_partition_buf[i];
     }
