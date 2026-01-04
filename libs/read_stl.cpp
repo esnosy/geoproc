@@ -60,10 +60,13 @@ std::vector<Vec3> read_stl(const char *path) {
     std::string token;
 
     while (ifs >> token) {
-      if (token == "vertex") {
-        Vec3 vertex;
-        ifs >> vertex.x >> vertex.y >> vertex.z;
-        vertices.push_back(vertex);
+      if (token == "loop") {
+        for (uint32_t i = 0; i < 3; i++) {
+          ifs >> token; // Skip "vertex"
+          Vec3 vertex;
+          ifs >> vertex.x >> vertex.y >> vertex.z;
+          vertices.push_back(vertex);
+        }
       }
     }
   }
