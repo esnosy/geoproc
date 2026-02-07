@@ -34,6 +34,11 @@ int main(int argc, char *argv[]) {
   std::cout << "Read " << vertices.size() << " vertices in " << ms.count()
             << "ms" << std::endl;
 
+  if (vertices.empty()) {
+    std::cout << "Empty mesh" << std::endl;
+    return 0;
+  }
+
   t0 = std::chrono::high_resolution_clock::now();
 
   std::ofstream ofs(output_path, std::ofstream::binary);
