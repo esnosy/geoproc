@@ -1,4 +1,8 @@
+#include <cerrno>
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -6,14 +10,23 @@
 
 #include "vec3.hpp"
 
-std::vector<Vec3> read_stl(const char *path) {
+#define STARTS_WITH(lhs, rhs) std::strncmp(lhs, rhs, sizeof(rhs) - 1) == 0
 
-  std::ifstream ifs(path, std::ifstream::binary);
+static void skip_whitespace(char **p) {
+  while (**p) {
+    if (!std::isspace(**p))
+      break;
+    (*p)++;
+  }
+}
+
+std::vector<Vec3> read_stl(const char *path) {
+  std::FILE *f = std::fopen(path, "rb");
 
   // Assume binary STL and skip the 80 bytes header
-  ifs.seekg(80, ifs.beg);
+  std::fseek(f, 80, SEEK_SET);
   uint32_t possible_num_tris;
-  ifs.read(reinterpret_cast<char *>(&possible_num_tris), sizeof(uint32_t));
+  fread(&possible_num_tris, sizeof(uint32_t), 1, f);
 
   // STL binary format spec.
   // https://en.wikipedia.org/w/index.php?title=STL_(file_format)&oldid=1306712422#Binary
@@ -38,35 +51,66 @@ std::vector<Vec3> read_stl(const char *path) {
   // endfacet
   uint64_t expected_file_size = uint64_t(possible_num_tris) * 50 + 84;
 
-  ifs.seekg(0, ifs.end);
-  uint64_t actual_file_size = ifs.tellg();
+  std::fseek(f, 0, SEEK_END);
+  uint64_t actual_file_size = std::ftell(f);
 
   std::vector<Vec3> vertices;
 
   if (actual_file_size == expected_file_size) {
     vertices.reserve(possible_num_tris * 3);
-    ifs.seekg(84, ifs.beg);
+    std::fseek(f, 84, SEEK_SET); // Skip header and triangle count
     for (uint32_t i = 0; i < possible_num_tris; i++) {
-      ifs.seekg(12, ifs.cur); // Skip normal vector
+      std::fseek(f, 12, SEEK_CUR); // Skip normal vector
       for (int j = 0; j < 3; j++) {
         Vec3 vertex;
-        ifs.read(reinterpret_cast<char *>(&vertex), sizeof(Vec3));
+        std::fread(&vertex, sizeof(Vec3), 1, f);
         vertices.push_back(vertex);
       }
-      ifs.seekg(2, ifs.cur); // Skip "attribute byte count"
+      std::fseek(f, 2, SEEK_CUR); // Skip "attribute byte count"
     }
   } else {
-    ifs.seekg(0, ifs.beg);
-    std::string token;
-
-    while (ifs >> token) {
-      if (token == "loop") {
-        for (uint32_t i = 0; i < 3; i++) {
-          ifs >> token; // Skip "vertex"
-          Vec3 vertex;
-          ifs >> vertex.x >> vertex.y >> vertex.z;
-          vertices.push_back(vertex);
+    std::fseek(f, 0, SEEK_SET);
+    char line[256];
+    while (std::fgets(line, 256, f) != nullptr) {
+      char *p = line;
+      char *end;
+      skip_whitespace(&p);
+      if (STARTS_WITH(p, "vertex")) {
+        p += 6; // Skip "vertex"
+        Vec3 vertex;
+        errno = 0;
+        vertex.x = std::strtof(p, &end);
+        if (errno == ERANGE) {
+          std::cerr << "STL: value out of range" << std::endl;
+          break;
         }
+        if (end == p && vertex.x == 0) {
+          std::cerr << "STL: failed to convert to float" << std::endl;
+          break;
+        }
+        p = end;
+        errno = 0;
+        vertex.y = std::strtof(p, &end);
+        if (errno == ERANGE) {
+          std::cerr << "STL: value out of range" << std::endl;
+          break;
+        }
+        if (end == p && vertex.y == 0) {
+          std::cerr << "STL: failed to convert to float" << std::endl;
+          break;
+        }
+        p = end;
+        errno = 0;
+        vertex.z = std::strtof(p, &end);
+        if (errno == ERANGE) {
+          std::cerr << "STL: value out of range" << std::endl;
+          break;
+        }
+        if (end == p && vertex.z == 0) {
+          std::cerr << "STL: failed to convert to float" << std::endl;
+          break;
+        }
+        vertices.push_back(vertex);
       }
     }
   }
