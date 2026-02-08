@@ -1,4 +1,5 @@
 #include <cerrno>
+#include <charconv>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -18,6 +19,16 @@ static void skip_whitespace(char **p) {
       break;
     (*p)++;
   }
+}
+
+static const char *skip_whitespace_const(const char *p) {
+  std::size_t i = 0;
+  while (p[i]) {
+    if (!std::isspace(p[i]))
+      break;
+    i++;
+  }
+  return p + i;
 }
 
 std::vector<Vec3> read_stl(const char *path) {
@@ -78,42 +89,24 @@ std::vector<Vec3> read_stl(const char *path) {
       if (STARTS_WITH(p, "vertex")) {
         p += 6; // Skip "vertex"
         Vec3 vertex;
-        errno = 0;
-        vertex.x = std::strtof(p, &end);
-        if (errno == ERANGE) {
-          std::cerr << "STL: value out of range" << std::endl;
-          break;
-        }
-        if (end == p && vertex.x == 0) {
-          std::cerr << "STL: failed to convert to float" << std::endl;
-          break;
-        }
-        p = end;
-        errno = 0;
-        vertex.y = std::strtof(p, &end);
-        if (errno == ERANGE) {
-          std::cerr << "STL: value out of range" << std::endl;
-          break;
-        }
-        if (end == p && vertex.y == 0) {
-          std::cerr << "STL: failed to convert to float" << std::endl;
-          break;
-        }
-        p = end;
-        errno = 0;
-        vertex.z = std::strtof(p, &end);
-        if (errno == ERANGE) {
-          std::cerr << "STL: value out of range" << std::endl;
-          break;
-        }
-        if (end == p && vertex.z == 0) {
-          std::cerr << "STL: failed to convert to float" << std::endl;
-          break;
+        const char *ptr = p;
+        for (int i = 0; i < 3; i++) {
+          auto result = std::from_chars(skip_whitespace_const(ptr), &line[255],
+                                        vertex[i]);
+          ptr = result.ptr;
+          if (result.ec == std::errc::invalid_argument) {
+            std::cerr << "STL: invalid value" << std::endl;
+            goto return_label;
+          } else if (result.ec == std::errc::result_out_of_range) {
+            std::cerr << "STL: out of range value" << std::endl;
+            goto return_label;
+          }
         }
         vertices.push_back(vertex);
       }
     }
   }
 
+return_label:
   return vertices;
 }
