@@ -84,7 +84,6 @@ std::vector<Vec3> read_stl(const char *path) {
     char line[256];
     while (std::fgets(line, 256, f) != nullptr) {
       char *p = line;
-      char *end;
       skip_whitespace(&p);
       if (STARTS_WITH(p, "vertex")) {
         p += 6; // Skip "vertex"
