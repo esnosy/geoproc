@@ -1,9 +1,7 @@
 #include <cctype>
 #include <cstdint>
-#include <cstdio>
 #include <cstring>
 #include <fstream>
-#include <string>
 
 #include "fast_float.hpp"
 #include "stl_io.hpp"
@@ -28,37 +26,39 @@ static void read_vertex(char *start, char *end, Vec3 &output) {
 std::vector<Triangle> read_stl(const char *path) {
   std::vector<Triangle> tris;
 
-  FILE *file = fopen(path, "rb");
+  std::ifstream ifs(path, std::ios::binary);
 
-  fseek(file, 80, SEEK_SET);
+  ifs.seekg(80, std::ios::beg);
   uint32_t num_tris;
-  fread(&num_tris, sizeof(uint32_t), 1, file);
+  ifs.read(reinterpret_cast<char *>(&num_tris), sizeof(uint32_t));
 
   uint64_t expected_size = 50 * uint64_t(num_tris) + 84;
 
-  fseek(file, 0, SEEK_END);
-  auto file_size = ftell(file);
+  ifs.seekg(0, std::ios::end);
+  auto file_size = ifs.tellg();
 
   if (file_size == expected_size) {
-    fseek(file, 84, SEEK_SET);
+    ifs.seekg(84, std::ios::beg);
     tris.reserve(num_tris);
     for (uint32_t i = 0; i < num_tris; i++) {
       Triangle t;
       float normal[3];
-      fread(normal, sizeof(float[3]), 1, file);
+      ifs.read(reinterpret_cast<char *>(normal), sizeof(float[3]));
       for (int j = 0; j < 3; j++) {
         float buf[3];
-        fread(buf, sizeof(float[3]), 1, file);
+        ifs.read(reinterpret_cast<char *>(buf), sizeof(float[3]));
         t[j] = Vec3(buf);
       }
       uint16_t attribute_byte_count;
-      fread(&attribute_byte_count, sizeof(uint16_t), 1, file);
+      ifs.read(reinterpret_cast<char *>(&attribute_byte_count),
+               sizeof(uint16_t));
       tris.push_back(t);
     }
   } else {
-    fseek(file, 0, SEEK_SET);
+    ifs.seekg(0, std::ios::beg);
+
     char line[256];
-    while (fgets(line, 256, file)) {
+    while (ifs.getline(line, 256)) {
       char *p = line;
       skip_spaces(p);
       if (memcmp(p, "vertex", 6) == 0) {
@@ -68,14 +68,14 @@ std::vector<Triangle> read_stl(const char *path) {
 
         read_vertex(p, line + 256, t.a);
 
-        fgets(line, 256, file);
+        ifs.getline(line, 256);
         p = line;
         skip_spaces(p);
         p += 6; // Skip "vertex"
 
         read_vertex(p, line + 256, t.b);
 
-        fgets(line, 256, file);
+        ifs.getline(line, 256);
         p = line;
         skip_spaces(p);
         p += 6; // Skip "vertex"
@@ -87,7 +87,6 @@ std::vector<Triangle> read_stl(const char *path) {
     }
   }
 
-  fclose(file);
   return tris;
 }
 
