@@ -9,6 +9,7 @@ struct Vec3 {
   Vec3(double x, double y, double z) : x(x), y(y), z(z) {}
   Vec3(double v) : x(v), y(v), z(v) {}
   double &operator[](int i) { return (&x)[i]; }
+  double operator[](int i) const { return (&x)[i]; }
 
   Vec3 operator*(double s) const { return Vec3{x * s, y * s, z * s}; }
   Vec3 operator/(double s) const { return Vec3{x / s, y / s, z / s}; }

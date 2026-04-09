@@ -9,3 +9,6 @@ add_library(stl_io STATIC libs/stl_io.cpp)
 
 add_executable(sample_surface apps/sample_surface.cpp)
 target_link_libraries(sample_surface PUBLIC stl_io)
+
+add_executable(bvh apps/bvh.cpp)
+target_link_libraries(bvh PUBLIC stl_io)
