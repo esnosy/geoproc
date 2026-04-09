@@ -11,6 +11,19 @@ struct Vec3 {
   double &operator[](int i) { return (&x)[i]; }
   double operator[](int i) const { return (&x)[i]; }
 
+  void operator+=(const Vec3 &other) {
+    x += other.x;
+    y += other.y;
+    z += other.z;
+  }
+  void operator/=(double s) {
+    x /= s;
+    y /= s;
+    z /= s;
+  }
+  Vec3 operator*(const Vec3 &other) const {
+    return Vec3{x * other.x, y * other.y, z * other.z};
+  }
   Vec3 operator*(double s) const { return Vec3{x * s, y * s, z * s}; }
   Vec3 operator/(double s) const { return Vec3{x / s, y / s, z / s}; }
   Vec3 operator+(const Vec3 &other) const {

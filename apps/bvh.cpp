@@ -33,21 +33,27 @@ BVHNode *build_bvh(std::vector<AABB> &aabbs) {
   while (!stack.empty()) {
     BVHNode *node = stack.top();
     stack.pop();
+    Vec3 mean_of_squares(0.0), mean(0.0);
     for (size_t i = node->first; i < node->first + node->count; i++) {
       node->aabb = node->aabb.join(aabbs[i]);
+      Vec3 center = aabbs[i].calc_center();
+      mean_of_squares += center * center;
+      mean += center;
     }
     if (node->count < 2) {
       continue;
     }
-    Vec3 extent = node->aabb.calc_extent();
+    mean_of_squares /= node->count;
+    mean /= node->count;
+    Vec3 variance = mean_of_squares - mean * mean;
     int split_axis = 0;
-    if (extent[1] > extent[split_axis]) {
+    if (variance[1] > variance[split_axis]) {
       split_axis = 1;
     }
-    if (extent[2] > extent[split_axis]) {
+    if (variance[2] > variance[split_axis]) {
       split_axis = 2;
     }
-    double split_value = node->aabb.calc_axis_center(split_axis);
+    double split_value = mean[split_axis];
     auto first_element_of_second_group = std::partition(
         aabbs.begin() + node->first, aabbs.begin() + node->first + node->count,
         [split_axis, split_value](const AABB &aabb) {

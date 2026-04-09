@@ -15,4 +15,5 @@ struct AABB {
   double calc_axis_center(int axis) const {
     return (min[axis] + max[axis]) / 2;
   }
+  Vec3 calc_center() const { return (min + max) / 2; }
 };
