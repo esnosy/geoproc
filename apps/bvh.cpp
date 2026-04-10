@@ -75,6 +75,9 @@ bool does_ray_intersect_bvh(const Ray &ray, const BVHNode *root) {
 }
 
 BVHNode *build_bvh(std::vector<AABB> &aabbs) {
+  if (aabbs.size() == 0) {
+    return nullptr;
+  }
   auto root = new BVHNode;
   root->left = nullptr;
   root->right = nullptr;
