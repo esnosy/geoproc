@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <random>
 #include <stack>
 #include <vector>
@@ -19,6 +20,59 @@ struct BVHNode {
   size_t first;
   size_t count;
 };
+
+struct Ray {
+  Vec3 origin;
+  Vec3 direction;
+  Ray(const Vec3 &origin, const Vec3 &direction)
+      : origin(origin), direction(direction) {}
+};
+
+bool does_ray_intersect_aabb(const Ray &ray, const AABB &aabb) {
+  double min = 0.0;
+  double max = std::numeric_limits<double>::infinity();
+  for (int i = 0; i < 3; i++) {
+    if (std::abs(ray.direction[i]) < 0.00001) {
+      if (ray.origin[i] > aabb.max[i] || ray.origin[i] < aabb.min[i]) {
+        return false;
+      }
+    } else {
+      double t_max = (aabb.max[i] - ray.origin[i]) / ray.direction[i];
+      double t_min = (aabb.min[i] - ray.origin[i]) / ray.direction[i];
+      if (ray.direction[i] < 0.0) {
+        std::swap(t_max, t_min);
+      }
+      min = std::max(t_min, min);
+      max = std::min(t_max, max);
+      if (max < min) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+bool does_ray_intersect_bvh(const Ray &ray, const BVHNode *root) {
+  std::stack<const BVHNode *> stack;
+  stack.push(root);
+  while (!stack.empty()) {
+    const BVHNode *node = stack.top();
+    stack.pop();
+    if (!does_ray_intersect_aabb(ray, node->aabb)) {
+      continue;
+    }
+    if (node->left) {
+      stack.push(node->left);
+    }
+    if (node->right) {
+      stack.push(node->right);
+    }
+    if (node->left == nullptr && node->right == nullptr) {
+      return true;
+    }
+  }
+  return false;
+}
 
 BVHNode *build_bvh(std::vector<AABB> &aabbs) {
   auto root = new BVHNode;
@@ -113,6 +167,52 @@ int main(int argc, char *argv[]) {
   }
 
   auto root = build_bvh(aabbs);
+
+  auto aspect_ratio = 16.0 / 9.0;
+  int image_width = 1920;
+
+  // Calculate the image height, and ensure that it's at least 1.
+  int image_height = int(image_width / aspect_ratio);
+  image_height = (image_height < 1) ? 1 : image_height;
+
+  // Camera
+
+  auto focal_length = 1.0;
+  auto viewport_height = 2.0;
+  auto viewport_width = viewport_height * (double(image_width) / image_height);
+  auto camera_center = Vec3(0, 0, 0);
+
+  // Calculate the vectors across the horizontal and down the vertical viewport
+  // edges.
+  auto viewport_u = Vec3(viewport_width, 0, 0);
+  auto viewport_v = Vec3(0, -viewport_height, 0);
+
+  // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+  auto pixel_delta_u = viewport_u / image_width;
+  auto pixel_delta_v = viewport_v / image_height;
+
+  // Calculate the location of the upper left pixel.
+  auto viewport_upper_left = camera_center - Vec3(0, 0, focal_length) -
+                             viewport_u / 2 - viewport_v / 2;
+  auto pixel00_loc =
+      viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+
+  std::ofstream ofs("output.ppm", std::ios::binary);
+  ofs << "P3\n" << image_width << " " << image_height << "\n255\n";
+
+  for (int j = 0; j < image_height; j++) {
+    for (int i = 0; i < image_width; i++) {
+      auto pixel_center =
+          pixel00_loc + (i * pixel_delta_u) + (j * pixel_delta_v);
+      auto ray_direction = pixel_center - camera_center;
+      Ray ray(camera_center, ray_direction);
+      if (does_ray_intersect_bvh(ray, root)) {
+        ofs << "255 255 255\n";
+      } else {
+        ofs << "0 0 0\n";
+      }
+    }
+  }
 
   size_t node_count = 0;
   size_t num_leaf_nodes = 0;
