@@ -113,6 +113,7 @@ int main(int argc, char *argv[]) {
   auto root = build_bvh(aabbs);
 
   size_t node_count = 0;
+  size_t num_leaf_nodes = 0;
   size_t max_prim_count = 0;
 
   std::stack<BVHNode *> stack;
@@ -126,6 +127,7 @@ int main(int argc, char *argv[]) {
       stack.push(node->right);
     if (node->right == nullptr && node->left == nullptr) {
       max_prim_count = std::max(max_prim_count, node->count);
+      num_leaf_nodes++;
     }
     delete node;
     node_count++;
@@ -133,4 +135,5 @@ int main(int argc, char *argv[]) {
 
   std::cout << "Node count: " << node_count << std::endl;
   std::cout << "Max prim. count: " << max_prim_count << std::endl;
+  std::cout << "Num. leaf nodes: " << num_leaf_nodes << std::endl;
 }
