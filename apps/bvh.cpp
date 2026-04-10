@@ -34,6 +34,8 @@ BVHNode *build_bvh(std::vector<AABB> &aabbs) {
     BVHNode *node = stack.top();
     stack.pop();
     Vec3 mean_of_squares(0.0), mean(0.0);
+    node->aabb = AABB(std::numeric_limits<double>::infinity(),
+                      -std::numeric_limits<double>::infinity());
     for (size_t i = node->first; i < node->first + node->count; i++) {
       node->aabb = node->aabb.join(aabbs[i]);
       Vec3 center = aabbs[i].calc_center();
