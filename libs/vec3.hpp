@@ -2,21 +2,21 @@
 
 #include <cmath>
 
-struct Vec3 {
-  double x, y, z;
+template <typename T> struct Vec3 {
+  T x, y, z;
   Vec3(float buf[3]) : x(buf[0]), y(buf[1]), z(buf[2]) {}
   Vec3() : x(0), y(0), z(0) {}
-  Vec3(double x, double y, double z) : x(x), y(y), z(z) {}
-  Vec3(double v) : x(v), y(v), z(v) {}
-  double &operator[](int i) { return (&x)[i]; }
-  double operator[](int i) const { return (&x)[i]; }
+  Vec3(T x, T y, T z) : x(x), y(y), z(z) {}
+  Vec3(T v) : x(v), y(v), z(v) {}
+  T &operator[](int i) { return (&x)[i]; }
+  T operator[](int i) const { return (&x)[i]; }
 
   void operator+=(const Vec3 &other) {
     x += other.x;
     y += other.y;
     z += other.z;
   }
-  void operator/=(double s) {
+  void operator/=(T s) {
     x /= s;
     y /= s;
     z /= s;
@@ -24,8 +24,8 @@ struct Vec3 {
   Vec3 operator*(const Vec3 &other) const {
     return Vec3{x * other.x, y * other.y, z * other.z};
   }
-  Vec3 operator*(double s) const { return Vec3{x * s, y * s, z * s}; }
-  Vec3 operator/(double s) const { return Vec3{x / s, y / s, z / s}; }
+  Vec3 operator*(T s) const { return Vec3{x * s, y * s, z * s}; }
+  Vec3 operator/(T s) const { return Vec3{x / s, y / s, z / s}; }
   Vec3 operator+(const Vec3 &other) const {
     return Vec3{x + other.x, y + other.y, z + other.z};
   }
@@ -33,7 +33,7 @@ struct Vec3 {
     return Vec3{x - other.x, y - other.y, z - other.z};
   }
 
-  double dot(const Vec3 &other) const {
+  T dot(const Vec3 &other) const {
     return x * other.x + y * other.y + z * other.z;
   }
 
@@ -59,8 +59,12 @@ struct Vec3 {
     };
   }
 
-  double length_squared() const { return this->dot(*this); }
-  double length() const { return std::sqrt(length_squared()); }
+  T length_squared() const { return this->dot(*this); }
+  T length() const { return std::sqrt(length_squared()); }
+  Vec3<float> as_float() const { return {float(x), float(y), float(z)}; }
+  Vec3<double> as_double() const { return {double(x), double(y), double(z)}; }
 };
 
-inline Vec3 operator*(double s, const Vec3 &v) { return v * s; }
+template <typename T> inline Vec3<T> operator*(T s, const Vec3<T> &v) {
+  return v * s;
+}

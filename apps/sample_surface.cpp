@@ -40,12 +40,12 @@ int main(int argc, char *argv[]) {
                                                         areas.end());
   std::uniform_real_distribution<double> real_dist(0.0, 1.0);
 
-  std::vector<Vec3> samples;
+  std::vector<Vec3<double>> samples;
   samples.reserve(num_samples);
   t0 = std::chrono::high_resolution_clock::now();
   for (size_t i = 0; i < num_samples; i++) {
     size_t triangle_index = triangle_area_dist(rng);
-    const Triangle &t = tris[triangle_index];
+    const Triangle<double> &t = tris[triangle_index];
 
     // Sample the triangle uniformly:
     // https://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations#SamplingaTriangle
@@ -55,10 +55,10 @@ int main(int argc, char *argv[]) {
     double u = 1 - sqrt_r1;
     double v = r2 * sqrt_r1;
 
-    Vec3 ab = t.b - t.a;
-    Vec3 ac = t.c - t.a;
+    auto ab = t.b - t.a;
+    auto ac = t.c - t.a;
 
-    Vec3 sample_point = u * ab + v * ac + t.a;
+    Vec3<double> sample_point = u * ab + v * ac + t.a;
     samples.push_back(sample_point);
   }
   t1 = std::chrono::high_resolution_clock::now();
@@ -75,5 +75,5 @@ int main(int argc, char *argv[]) {
       << "property double z\n"
       << "end_header\n";
   out.write(reinterpret_cast<const char *>(samples.data()),
-            samples.size() * sizeof(Vec3));
+            samples.size() * sizeof(Vec3<double>));
 }

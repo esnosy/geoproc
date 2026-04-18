@@ -12,7 +12,7 @@ static void skip_spaces(char *&p) {
   }
 }
 
-static void read_vertex(char *start, char *end, Vec3 &output) {
+static void read_vertex(char *start, char *end, Vec3<double> &output) {
   skip_spaces(start);
   auto res = fast_float::from_chars(start, end, output.x);
   start = const_cast<char *>(res.ptr);
@@ -23,8 +23,8 @@ static void read_vertex(char *start, char *end, Vec3 &output) {
   res = fast_float::from_chars(start, end, output.z);
 }
 
-std::vector<Triangle> read_stl(const char *path) {
-  std::vector<Triangle> tris;
+std::vector<Triangle<double>> read_stl(const char *path) {
+  std::vector<Triangle<double>> tris;
 
   std::ifstream ifs(path, std::ios::binary);
 
@@ -41,13 +41,13 @@ std::vector<Triangle> read_stl(const char *path) {
     ifs.seekg(84, std::ios::beg);
     tris.reserve(num_tris);
     for (uint32_t i = 0; i < num_tris; i++) {
-      Triangle t;
+      Triangle<double> t;
       float normal[3];
       ifs.read(reinterpret_cast<char *>(normal), sizeof(float[3]));
       for (int j = 0; j < 3; j++) {
         float buf[3];
         ifs.read(reinterpret_cast<char *>(buf), sizeof(float[3]));
-        t[j] = Vec3(buf);
+        t[j] = Vec3<double>(buf);
       }
       uint16_t attribute_byte_count;
       ifs.read(reinterpret_cast<char *>(&attribute_byte_count),
@@ -64,7 +64,7 @@ std::vector<Triangle> read_stl(const char *path) {
       if (memcmp(p, "vertex", 6) == 0) {
         p += 6; // Skip "vertex"
 
-        Triangle t;
+        Triangle<double> t;
 
         read_vertex(p, line + 256, t.a);
 
@@ -90,7 +90,7 @@ std::vector<Triangle> read_stl(const char *path) {
   return tris;
 }
 
-void write_stl_binary(const char *path, const std::vector<Triangle> &tris) {
+void write_stl_binary(const char *path, const std::vector<Triangle<double>> &tris) {
   char header[80] = {};
   uint32_t num_tris = (uint32_t)tris.size();
   std::ofstream ofs(path, std::ios::binary);
@@ -109,7 +109,7 @@ void write_stl_binary(const char *path, const std::vector<Triangle> &tris) {
   }
 }
 
-void write_stl_ascii(const char *path, const std::vector<Triangle> &tris) {
+void write_stl_ascii(const char *path, const std::vector<Triangle<double>> &tris) {
   std::ofstream ofs(path, std::ios::binary);
   ofs << "solid \n";
   for (const auto &t : tris) {
