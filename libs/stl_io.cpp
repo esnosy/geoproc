@@ -1,27 +1,12 @@
+#include <cassert>
 #include <cctype>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
 
 #include "fast_float.hpp"
+#include "mio.hpp"
 #include "stl_io.hpp"
-
-static void skip_spaces(char *&p) {
-  while (isspace(*p) && *p) {
-    p++;
-  }
-}
-
-static void read_vertex(char *start, char *end, Vec3<double> &output) {
-  skip_spaces(start);
-  auto res = fast_float::from_chars(start, end, output.x);
-  start = const_cast<char *>(res.ptr);
-  skip_spaces(start);
-  res = fast_float::from_chars(start, end, output.y);
-  start = const_cast<char *>(res.ptr);
-  skip_spaces(start);
-  res = fast_float::from_chars(start, end, output.z);
-}
 
 std::vector<Triangle<double>> read_stl(const char *path) {
   std::vector<Triangle<double>> tris;
@@ -57,32 +42,62 @@ std::vector<Triangle<double>> read_stl(const char *path) {
   } else {
     ifs.seekg(0, std::ios::beg);
 
-    char line[256];
-    while (ifs.getline(line, 256)) {
-      char *p = line;
-      skip_spaces(p);
-      if (memcmp(p, "vertex", 6) == 0) {
-        p += 6; // Skip "vertex"
+    mio::mmap_source mmap(path);
+    size_t mmap_offset = 0;
 
+    auto compare_token = [&](const char *token, size_t token_size) {
+      if (mmap_offset + token_size > mmap.size())
+        return false;
+      for (size_t i = 0; i < token_size; i++) {
+        if (mmap[mmap_offset + i] != token[i]) {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    auto skip_spaces = [&]() {
+      while (mmap_offset < mmap.size() && std::isspace(mmap[mmap_offset])) {
+        ++mmap_offset;
+      }
+    };
+
+    auto skip_token = [&]() {
+      while (mmap_offset < mmap.size() && !std::isspace(mmap[mmap_offset])) {
+        ++mmap_offset;
+      }
+    };
+
+    auto read_vertex = [&](Vec3<double> &output) {
+      for (int i = 0; i < 3; i++) {
+        fast_float::from_chars(mmap.data() + mmap_offset,
+                               mmap.data() + mmap.size(), output[i]);
+        skip_token();
+        skip_spaces();
+      }
+    };
+
+    while (mmap_offset < mmap.size()) {
+      skip_spaces();
+      if (compare_token("vertex", 6)) {
         Triangle<double> t;
+        skip_token();  // Skip "vertex"
+        skip_spaces(); // Skip spaces after "vertex"
+        read_vertex(t.a);
 
-        read_vertex(p, line + 256, t.a);
+        assert(compare_token("vertex", 6));
+        skip_token();  // Skip "vertex"
+        skip_spaces(); // Skip spaces after "vertex"
+        read_vertex(t.b);
 
-        ifs.getline(line, 256);
-        p = line;
-        skip_spaces(p);
-        p += 6; // Skip "vertex"
-
-        read_vertex(p, line + 256, t.b);
-
-        ifs.getline(line, 256);
-        p = line;
-        skip_spaces(p);
-        p += 6; // Skip "vertex"
-
-        read_vertex(p, line + 256, t.c);
+        assert(compare_token("vertex", 6));
+        skip_token();  // Skip "vertex"
+        skip_spaces(); // Skip spaces after "vertex"
+        read_vertex(t.c);
 
         tris.push_back(t);
+      } else {
+        skip_token();
       }
     }
   }
@@ -90,7 +105,8 @@ std::vector<Triangle<double>> read_stl(const char *path) {
   return tris;
 }
 
-void write_stl_binary(const char *path, const std::vector<Triangle<double>> &tris) {
+void write_stl_binary(const char *path,
+                      const std::vector<Triangle<double>> &tris) {
   char header[80] = {};
   uint32_t num_tris = (uint32_t)tris.size();
   std::ofstream ofs(path, std::ios::binary);
@@ -109,7 +125,8 @@ void write_stl_binary(const char *path, const std::vector<Triangle<double>> &tri
   }
 }
 
-void write_stl_ascii(const char *path, const std::vector<Triangle<double>> &tris) {
+void write_stl_ascii(const char *path,
+                     const std::vector<Triangle<double>> &tris) {
   std::ofstream ofs(path, std::ios::binary);
   ofs << "solid \n";
   for (const auto &t : tris) {

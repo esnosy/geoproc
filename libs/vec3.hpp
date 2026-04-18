@@ -2,6 +2,10 @@
 
 #include <cmath>
 
+// Account for Windows headers
+#undef min
+#undef max
+
 template <typename T> struct Vec3 {
   T x, y, z;
   Vec3(float buf[3]) : x(buf[0]), y(buf[1]), z(buf[2]) {}
