@@ -22,6 +22,54 @@
 #define _aligned_free(ptr) std::free(ptr)
 #endif
 
+template <typename T> struct Indexed_Mesh {
+  std::vector<Vec3<T>> vertices;
+  std::vector<std::array<uint32_t, 3>> tris;
+
+  static Indexed_Mesh from_stl_tris(const std::vector<Triangle<T>> &tris) {
+    std::unordered_map<Vec3<T>, uint32_t> vertex_to_index;
+    vertex_to_index.reserve(tris.size() * 3);
+    Indexed_Mesh<T> mesh;
+    mesh.tris.reserve(tris.size());
+    mesh.vertices.reserve(tris.size() * 3);
+    for (const auto &t : tris) {
+      std::array<uint32_t, 3> indexed_tri;
+
+      for (int i = 0; i < 3; i++) {
+        auto v_it = vertex_to_index.find(t[i]);
+        if (v_it == vertex_to_index.end()) {
+          mesh.vertices.push_back(t[i]);
+          vertex_to_index[t[i]] = vertex_to_index.size();
+          indexed_tri[i] = vertex_to_index.size() - 1;
+        } else {
+          indexed_tri[i] = v_it->second;
+        }
+      }
+      mesh.tris.push_back(indexed_tri);
+    }
+    return mesh;
+  }
+
+  std::vector<Vec3<T>> calc_vertex_normals() const {
+    std::vector<Vec3<T>> vertex_normals;
+    vertex_normals.resize(vertices.size(), Vec3<T>(0, 0, 0));
+    for (size_t i = 0; i < tris.size(); i++) {
+      const auto &indexed_tri = tris[i];
+      const auto &tri =
+          Triangle<T>{vertices[indexed_tri[0]], vertices[indexed_tri[1]],
+                      vertices[indexed_tri[2]]};
+      const auto &n = tri.calc_normal_unnormalized();
+      for (int j = 0; j < 3; j++) {
+        vertex_normals[indexed_tri[j]] += n;
+      }
+    }
+    for (auto &n : vertex_normals) {
+      n = n.normalized();
+    }
+    return vertex_normals;
+  }
+};
+
 struct BVHNode {
   AABB<float> aabb;
   uint32_t left_first, prim_count;
@@ -203,37 +251,8 @@ int main(int argc, char *argv[]) {
   std::cout << "Read " << tris.size() << " triangles in " << duration.count()
             << " ms" << std::endl;
 
-  std::unordered_map<Vec3<double>, uint32_t> vertex_to_index;
-  std::vector<std::array<uint32_t, 3>> indexed_tris;
-  std::vector<Vec3<double>> unique_vertices;
-  for (const auto &t : tris) {
-    std::array<uint32_t, 3> indexed_tri;
-
-    for (int i = 0; i < 3; i++) {
-      auto v_it = vertex_to_index.find(t[i]);
-      if (v_it == vertex_to_index.end()) {
-        vertex_to_index[t[i]] = vertex_to_index.size();
-        unique_vertices.push_back(t[i]);
-        indexed_tri[i] = vertex_to_index.size() - 1;
-      } else {
-        indexed_tri[i] = v_it->second;
-      }
-    }
-    indexed_tris.push_back(indexed_tri);
-  }
-  std::vector<Vec3<double>> vertex_normals;
-  vertex_normals.resize(unique_vertices.size(), Vec3<double>(0, 0, 0));
-
-  for (size_t i = 0; i < tris.size(); i++) {
-    const auto &t = tris[i];
-    const auto &n = t.calc_normal_unnormalized();
-    for (int j = 0; j < 3; j++) {
-      vertex_normals[indexed_tris[i][j]] += n;
-    }
-  }
-  for (auto &n : vertex_normals) {
-    n = n.normalized();
-  }
+  auto mesh = Indexed_Mesh<double>::from_stl_tris(tris);
+  auto vertex_normals = mesh.calc_vertex_normals();
 
   std::vector<Triangle<float>> tris_float;
   tris_float.reserve(tris.size());
@@ -295,7 +314,7 @@ int main(int argc, char *argv[]) {
       Ray<double> ray(camera_center, ray_direction);
       bvh.intersect_tris(ray, 0, tris);
       if (ray.t < 1e30) {
-        const auto &tri = indexed_tris[ray.tri_idx];
+        const auto &tri = mesh.tris[ray.tri_idx];
         const auto &n1 = vertex_normals[tri[0]];
         const auto &n2 = vertex_normals[tri[1]];
         const auto &n3 = vertex_normals[tri[2]];
