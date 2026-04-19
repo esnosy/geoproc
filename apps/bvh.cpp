@@ -305,7 +305,7 @@ int main(int argc, char *argv[]) {
   std::cout << "Built BVH in " << duration.count() << " ms" << std::endl;
 
   auto aspect_ratio = 16.0 / 9.0;
-  int image_width = 1920 * 4;
+  int image_width = 1280;
 
   // Calculate the image height, and ensure that it's at least 1.
   int image_height = int(image_width / aspect_ratio);
