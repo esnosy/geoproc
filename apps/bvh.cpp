@@ -76,43 +76,47 @@ struct BVHNode {
   bool is_leaf() { return prim_count > 0; }
 };
 
+template <typename T> struct Ray_Triangle_Intersection {
+  T t, u, v;
+  bool hit = false;
+};
+
 template <typename T> struct Ray {
   Vec3<T> origin;
   Vec3<T> direction;
-  T t = 1e30, u = 1e30, v = 1e30;
-  size_t tri_idx = std::numeric_limits<size_t>::max();
+  Ray_Triangle_Intersection<T> intersection;
+  size_t tri_idx;
   Ray(const Vec3<T> &origin, const Vec3<T> &direction)
       : origin(origin), direction(direction) {}
 };
 
 template <typename T>
-void intersect_ray_triangle(Ray<T> &ray, const std::vector<Triangle<T>> &tris,
-                            size_t tri_idx) {
-  const Triangle<T> &tri = tris[tri_idx];
+Ray_Triangle_Intersection<T> intersect_ray_triangle(Ray<T> &ray,
+                                                    const Triangle<T> &tri) {
+  Ray_Triangle_Intersection<T> result;
   const Vec3<T> edge1 = tri.b - tri.a;
   const Vec3<T> edge2 = tri.c - tri.a;
   const Vec3<T> h = ray.direction.cross(edge2);
   const T a = edge1.dot(h);
   if (a > -0.000001f && a < 0.000001f)
-    return; // ray parallel to triangle
+    return result; // ray parallel to triangle
   const T f = 1 / a;
   const Vec3<T> s = ray.origin - tri.a;
   const T u = f * s.dot(h);
   if (u < 0 || u > 1)
-    return;
+    return result;
   const Vec3<T> q = s.cross(edge1);
   const T v = f * ray.direction.dot(q);
   if (v < 0 || u + v > 1)
-    return;
+    return result;
   const T t = f * edge2.dot(q);
   if (t > 0.000001f) {
-    if (t < ray.t) {
-      ray.t = t;
-      ray.u = u;
-      ray.v = v;
-      ray.tri_idx = tri_idx;
-    }
+    result.hit = true;
+    result.t = t;
+    result.u = u;
+    result.v = v;
   }
+  return result;
 }
 
 template <typename T>
@@ -156,7 +160,18 @@ struct BVH {
     if (node.is_leaf()) {
       for (uint32_t i = 0; i < node.prim_count; i++) {
         auto tri_idx = indices[node.left_first + i];
-        intersect_ray_triangle(ray, tris, tri_idx);
+        auto result = intersect_ray_triangle(ray, tris[tri_idx]);
+        if (result.hit) {
+          if (ray.intersection.hit) {
+            if (result.t < ray.intersection.t) {
+              ray.intersection = result;
+              ray.tri_idx = tri_idx;
+            }
+          } else {
+            ray.intersection = result;
+            ray.tri_idx = tri_idx;
+          }
+        }
       }
     } else {
       intersect_tris(ray, node.left_first, tris);
@@ -313,12 +328,13 @@ int main(int argc, char *argv[]) {
       auto ray_direction = pixel_center - camera_center;
       Ray<double> ray(camera_center, ray_direction);
       bvh.intersect_tris(ray, 0, tris);
-      if (ray.t < 1e30) {
+      if (ray.intersection.hit) {
         const auto &tri = mesh.tris[ray.tri_idx];
         const auto &n1 = vertex_normals[tri[0]];
         const auto &n2 = vertex_normals[tri[1]];
         const auto &n3 = vertex_normals[tri[2]];
-        auto normal = (1 - ray.u - ray.v) * n1 + ray.u * n2 + ray.v * n3;
+        auto normal = (1 - ray.intersection.u - ray.intersection.v) * n1 +
+                      ray.intersection.u * n2 + ray.intersection.v * n3;
         uint32_t c = std::clamp(
             std::abs(normal.dot(-ray.direction.normalized())) * 255.0, 0.0,
             255.0);
