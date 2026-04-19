@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -203,10 +204,10 @@ int main(int argc, char *argv[]) {
             << " ms" << std::endl;
 
   std::unordered_map<Vec3<double>, uint32_t> vertex_to_index;
-  std::vector<Vec3<uint32_t>> indexed_tris;
+  std::vector<std::array<uint32_t, 3>> indexed_tris;
   std::vector<Vec3<double>> unique_vertices;
   for (const auto &t : tris) {
-    Vec3<uint32_t> indexed_tri;
+    std::array<uint32_t, 3> indexed_tri;
 
     for (int i = 0; i < 3; i++) {
       auto v_it = vertex_to_index.find(t[i]);
