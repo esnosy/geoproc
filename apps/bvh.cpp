@@ -44,7 +44,7 @@ void intersect_ray_triangle(Ray<T> &ray, const std::vector<Triangle<T>> &tris,
   const Vec3<T> edge2 = tri.c - tri.a;
   const Vec3<T> h = ray.direction.cross(edge2);
   const T a = edge1.dot(h);
-  if (a > -0.0001f && a < 0.0001f)
+  if (a > -0.000001f && a < 0.000001f)
     return; // ray parallel to triangle
   const T f = 1 / a;
   const Vec3<T> s = ray.origin - tri.a;
@@ -56,7 +56,7 @@ void intersect_ray_triangle(Ray<T> &ray, const std::vector<Triangle<T>> &tris,
   if (v < 0 || u + v > 1)
     return;
   const T t = f * edge2.dot(q);
-  if (t > 0.0001f) {
+  if (t > 0.000001f) {
     if (t < ray.t) {
       ray.t = t;
       ray.u = u;
