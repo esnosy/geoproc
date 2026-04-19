@@ -103,6 +103,8 @@ std::vector<Triangle<double>> read_stl(const char *path) {
         file_buf.skip_token();
       }
     }
+
+    free(buf);
   }
 
   return tris;
