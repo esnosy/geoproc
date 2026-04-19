@@ -15,6 +15,12 @@ template <typename T> struct Vec3 {
   T &operator[](int i) { return (&x)[i]; }
   T operator[](int i) const { return (&x)[i]; }
 
+  bool operator==(const Vec3 &other) const {
+    return x == other.x && y == other.y && z == other.z;
+  }
+
+  Vec3 operator-() const { return Vec3(-x, -y, -z); }
+
   void operator+=(const Vec3 &other) {
     x += other.x;
     y += other.y;
@@ -67,8 +73,27 @@ template <typename T> struct Vec3 {
   T length() const { return std::sqrt(length_squared()); }
   Vec3<float> as_float() const { return {float(x), float(y), float(z)}; }
   Vec3<double> as_double() const { return {double(x), double(y), double(z)}; }
+  Vec3<T> normalized() const {
+    T len = length();
+    if (len > 0) {
+      return *this / len;
+    } else {
+      return Vec3<T>(0.0);
+    }
+  }
 };
 
 template <typename T> inline Vec3<T> operator*(T s, const Vec3<T> &v) {
   return v * s;
 }
+
+namespace std {
+template <typename T> struct hash<Vec3<T>> {
+  size_t operator()(const Vec3<T> &v) const {
+    size_t h1 = std::hash<T>()(v.x);
+    size_t h2 = std::hash<T>()(v.y);
+    size_t h3 = std::hash<T>()(v.z);
+    return h1 ^ (h2 << 1) ^ (h3 << 2);
+  }
+};
+} // namespace std

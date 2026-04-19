@@ -9,6 +9,8 @@
 #include <limits>
 #include <random>
 #include <stack>
+#include <tuple>
+#include <unordered_map>
 #include <vector>
 
 #include "../libs/aabb.hpp"
@@ -29,12 +31,15 @@ template <typename T> struct Ray {
   Vec3<T> origin;
   Vec3<T> direction;
   T t = 1e30, u = 1e30, v = 1e30;
+  size_t tri_idx = std::numeric_limits<size_t>::max();
   Ray(const Vec3<T> &origin, const Vec3<T> &direction)
       : origin(origin), direction(direction) {}
 };
 
 template <typename T>
-void intersect_ray_triangle(Ray<T> &ray, const Triangle<T> &tri) {
+void intersect_ray_triangle(Ray<T> &ray, const std::vector<Triangle<T>> &tris,
+                            size_t tri_idx) {
+  const Triangle<T> &tri = tris[tri_idx];
   const Vec3<T> edge1 = tri.b - tri.a;
   const Vec3<T> edge2 = tri.c - tri.a;
   const Vec3<T> h = ray.direction.cross(edge2);
@@ -56,6 +61,7 @@ void intersect_ray_triangle(Ray<T> &ray, const Triangle<T> &tri) {
       ray.t = t;
       ray.u = u;
       ray.v = v;
+      ray.tri_idx = tri_idx;
     }
   }
 }
@@ -91,14 +97,18 @@ struct BVH {
 
   void free() { _aligned_free(nodes); }
 
-  void intersect_tris(Ray<float> &ray, const uint32_t node_idx,
-                      const std::vector<Triangle<float>> &tris) {
+  void intersect_tris(Ray<double> &ray, const uint32_t node_idx,
+                      const std::vector<Triangle<double>> &tris) {
     BVHNode &node = nodes[node_idx];
-    if (!intersect_ray_aabb(ray, node.aabb))
+    AABB<double> node_aabb{node.aabb.min.as_double(),
+                           node.aabb.max.as_double()};
+    if (!intersect_ray_aabb(ray, node_aabb))
       return;
     if (node.is_leaf()) {
-      for (uint32_t i = 0; i < node.prim_count; i++)
-        intersect_ray_triangle(ray, tris[indices[node.left_first + i]]);
+      for (uint32_t i = 0; i < node.prim_count; i++) {
+        auto tri_idx = indices[node.left_first + i];
+        intersect_ray_triangle(ray, tris, tri_idx);
+      }
     } else {
       intersect_tris(ray, node.left_first, tris);
       intersect_tris(ray, node.left_first + 1, tris);
@@ -192,6 +202,38 @@ int main(int argc, char *argv[]) {
   std::cout << "Read " << tris.size() << " triangles in " << duration.count()
             << " ms" << std::endl;
 
+  std::unordered_map<Vec3<double>, uint32_t> vertex_to_index;
+  std::vector<Vec3<uint32_t>> indexed_tris;
+  std::vector<Vec3<double>> unique_vertices;
+  for (const auto &t : tris) {
+    Vec3<uint32_t> indexed_tri;
+
+    for (int i = 0; i < 3; i++) {
+      auto v_it = vertex_to_index.find(t[i]);
+      if (v_it == vertex_to_index.end()) {
+        vertex_to_index[t[i]] = vertex_to_index.size();
+        unique_vertices.push_back(t[i]);
+        indexed_tri[i] = vertex_to_index.size() - 1;
+      } else {
+        indexed_tri[i] = v_it->second;
+      }
+    }
+    indexed_tris.push_back(indexed_tri);
+  }
+  std::vector<Vec3<double>> vertex_normals;
+  vertex_normals.resize(unique_vertices.size(), Vec3<double>(0, 0, 0));
+
+  for (size_t i = 0; i < tris.size(); i++) {
+    const auto &t = tris[i];
+    const auto &n = t.calc_normal_unnormalized();
+    for (int j = 0; j < 3; j++) {
+      vertex_normals[indexed_tris[i][j]] += n;
+    }
+  }
+  for (auto &n : vertex_normals) {
+    n = n.normalized();
+  }
+
   std::vector<Triangle<float>> tris_float;
   tris_float.reserve(tris.size());
   for (const auto &t : tris) {
@@ -249,10 +291,16 @@ int main(int argc, char *argv[]) {
       auto pixel_center = pixel00_loc + (double(i) * pixel_delta_u) +
                           (double(j) * pixel_delta_v);
       auto ray_direction = pixel_center - camera_center;
-      Ray<float> ray(camera_center.as_float(), ray_direction.as_float());
-      bvh.intersect_tris(ray, 0, tris_float);
+      Ray<double> ray(camera_center, ray_direction);
+      bvh.intersect_tris(ray, 0, tris);
       if (ray.t < 1e30) {
-        uint32_t c = std::clamp(ray.t, 0.0f, 255.0f);
+        const auto &tri = indexed_tris[ray.tri_idx];
+        const auto &n1 = vertex_normals[tri[0]];
+        const auto &n2 = vertex_normals[tri[1]];
+        const auto &n3 = vertex_normals[tri[2]];
+        auto normal = (1 - ray.u - ray.v) * n1 + ray.u * n2 + ray.v * n3;
+        uint32_t c = std::clamp(normal.dot(-ray.direction.normalized()) * 255.0,
+                                0.0, 255.0);
         ofs << c << ' ' << c << ' ' << c << '\n';
       } else {
         ofs << "0 0 0\n";
