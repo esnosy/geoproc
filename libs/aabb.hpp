@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Vec3.hpp"
+#include "vec3.hpp"
 
 template <typename T> struct AABB {
   Vec3<T> min;
