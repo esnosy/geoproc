@@ -1,12 +1,46 @@
 #include <cassert>
 #include <cctype>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 
 #include "fast_float.hpp"
-#include "mio.hpp"
 #include "stl_io.hpp"
+
+struct File_Buf {
+  char *buf;
+  size_t size;
+  size_t offset;
+
+  bool compare_token(const char *token, size_t token_size) {
+    if (offset + token_size > size)
+      return false;
+    for (size_t i = 0; i < token_size; i++) {
+      if (buf[offset + i] != token[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+  void skip_spaces() {
+    while (offset < size && std::isspace(buf[offset])) {
+      ++offset;
+    }
+  }
+  void skip_token() {
+    while (offset < size && !std::isspace(buf[offset])) {
+      ++offset;
+    }
+  }
+  void read_vertex(Vec3<double> &output) {
+    for (int i = 0; i < 3; i++) {
+      fast_float::from_chars(buf + offset, buf + size, output[i]);
+      skip_token();
+      skip_spaces();
+    }
+  }
+};
 
 std::vector<Triangle<double>> read_stl(const char *path) {
   std::vector<Triangle<double>> tris;
@@ -42,62 +76,31 @@ std::vector<Triangle<double>> read_stl(const char *path) {
   } else {
     ifs.seekg(0, std::ios::beg);
 
-    mio::mmap_source mmap(path);
-    size_t mmap_offset = 0;
+    char *buf = (char *)malloc(file_size);
+    ifs.read(buf, file_size);
+    File_Buf file_buf{buf, (size_t)file_size, 0};
 
-    auto compare_token = [&](const char *token, size_t token_size) {
-      if (mmap_offset + token_size > mmap.size())
-        return false;
-      for (size_t i = 0; i < token_size; i++) {
-        if (mmap[mmap_offset + i] != token[i]) {
-          return false;
-        }
-      }
-      return true;
-    };
-
-    auto skip_spaces = [&]() {
-      while (mmap_offset < mmap.size() && std::isspace(mmap[mmap_offset])) {
-        ++mmap_offset;
-      }
-    };
-
-    auto skip_token = [&]() {
-      while (mmap_offset < mmap.size() && !std::isspace(mmap[mmap_offset])) {
-        ++mmap_offset;
-      }
-    };
-
-    auto read_vertex = [&](Vec3<double> &output) {
-      for (int i = 0; i < 3; i++) {
-        fast_float::from_chars(mmap.data() + mmap_offset,
-                               mmap.data() + mmap.size(), output[i]);
-        skip_token();
-        skip_spaces();
-      }
-    };
-
-    while (mmap_offset < mmap.size()) {
-      skip_spaces();
-      if (compare_token("vertex", 6)) {
+    while (file_buf.offset < file_buf.size) {
+      file_buf.skip_spaces();
+      if (file_buf.compare_token("vertex", 6)) {
         Triangle<double> t;
-        skip_token();  // Skip "vertex"
-        skip_spaces(); // Skip spaces after "vertex"
-        read_vertex(t.a);
+        file_buf.skip_token();  // Skip "vertex"
+        file_buf.skip_spaces(); // Skip spaces after "vertex"
+        file_buf.read_vertex(t.a);
 
-        assert(compare_token("vertex", 6));
-        skip_token();  // Skip "vertex"
-        skip_spaces(); // Skip spaces after "vertex"
-        read_vertex(t.b);
+        assert(file_buf.compare_token("vertex", 6));
+        file_buf.skip_token();  // Skip "vertex"
+        file_buf.skip_spaces(); // Skip spaces after "vertex"
+        file_buf.read_vertex(t.b);
 
-        assert(compare_token("vertex", 6));
-        skip_token();  // Skip "vertex"
-        skip_spaces(); // Skip spaces after "vertex"
-        read_vertex(t.c);
+        assert(file_buf.compare_token("vertex", 6));
+        file_buf.skip_token();  // Skip "vertex"
+        file_buf.skip_spaces(); // Skip spaces after "vertex"
+        file_buf.read_vertex(t.c);
 
         tris.push_back(t);
       } else {
-        skip_token();
+        file_buf.skip_token();
       }
     }
   }
