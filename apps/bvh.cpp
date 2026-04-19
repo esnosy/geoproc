@@ -70,7 +70,7 @@ template <typename T> struct Indexed_Mesh {
   }
 };
 
-struct BVHNode {
+struct BVH_Node {
   AABB<float> aabb;
   uint32_t left_first, prim_count;
   bool is_leaf() { return prim_count > 0; }
@@ -145,7 +145,7 @@ bool intersect_ray_aabb(const Ray<T> &ray, const AABB<T> &aabb) {
 }
 
 struct BVH {
-  BVHNode *nodes;
+  BVH_Node *nodes;
   std::vector<uint32_t> indices;
 
   void free() { _aligned_free(nodes); }
@@ -153,7 +153,7 @@ struct BVH {
   template <typename T>
   void intersect_tris(Ray<T> &ray, const uint32_t node_idx,
                       const std::vector<Triangle<T>> &tris) {
-    BVHNode &node = nodes[node_idx];
+    BVH_Node &node = nodes[node_idx];
     AABB<T> node_aabb{node.aabb.min.as<T>(), node.aabb.max.as<T>()};
     if (!intersect_ray_aabb(ray, node_aabb))
       return;
@@ -182,7 +182,7 @@ struct BVH {
 
 BVH build_bvh(const std::vector<AABB<float>> &aabbs) {
   auto nodes =
-      (BVHNode *)_aligned_malloc(sizeof(BVHNode) * 2 * aabbs.size(), 64);
+      (BVH_Node *)_aligned_malloc(sizeof(BVH_Node) * 2 * aabbs.size(), 64);
   uint32_t root_node_idx = 0, nodes_used = 2;
   std::vector<uint32_t> indices;
   indices.reserve(aabbs.size());
@@ -191,7 +191,7 @@ BVH build_bvh(const std::vector<AABB<float>> &aabbs) {
   }
 
   auto update_node_bounds = [&](uint32_t node_idx) {
-    BVHNode &node = nodes[node_idx];
+    BVH_Node &node = nodes[node_idx];
     node.aabb.min = Vec3<float>(1e30f);
     node.aabb.max = Vec3<float>(-1e30f);
     for (uint32_t first = node.left_first, i = 0; i < node.prim_count; i++) {
@@ -201,7 +201,7 @@ BVH build_bvh(const std::vector<AABB<float>> &aabbs) {
   };
   std::function<void(uint32_t)> subdivide = [&](uint32_t node_idx) {
     // terminate recursion
-    BVHNode &node = nodes[node_idx];
+    BVH_Node &node = nodes[node_idx];
     if (node.prim_count <= 2)
       return;
     // determine split axis and position
@@ -241,7 +241,7 @@ BVH build_bvh(const std::vector<AABB<float>> &aabbs) {
     subdivide(right_child_idx);
   };
 
-  BVHNode &root = nodes[root_node_idx];
+  BVH_Node &root = nodes[root_node_idx];
   root.left_first = 0;
   root.prim_count = (uint32_t)aabbs.size();
   update_node_bounds(root_node_idx);
@@ -352,7 +352,7 @@ int main(int argc, char *argv[]) {
   uint32_t num_leaf_nodes = 0;
   uint32_t max_prim_count = 0;
 
-  std::stack<BVHNode *> stack;
+  std::stack<BVH_Node *> stack;
   stack.push(bvh.nodes);
   while (!stack.empty()) {
     auto node = stack.top();
