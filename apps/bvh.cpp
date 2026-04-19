@@ -14,6 +14,11 @@
 #include "../libs/aabb.hpp"
 #include "../libs/stl_io.hpp"
 
+#if !(defined(__UCRT__) || defined(WIN32))
+#define _aligned_malloc(size, alignment) std::aligned_alloc(alignment, size)
+#define _aligned_free(ptr) std::free(ptr)
+#endif
+
 struct BVHNode {
   AABB<float> aabb;
   uint32_t left_first, prim_count;
@@ -169,7 +174,7 @@ BVH build_bvh(const std::vector<AABB<float>> &aabbs) {
   // subdivide recursively
   subdivide(root_node_idx);
 
-  return {nodes, indices};
+  return BVH{nodes, indices};
 }
 
 int main(int argc, char *argv[]) {
