@@ -97,11 +97,11 @@ struct BVH {
 
   void free() { _aligned_free(nodes); }
 
-  void intersect_tris(Ray<double> &ray, const uint32_t node_idx,
-                      const std::vector<Triangle<double>> &tris) {
+  template <typename T>
+  void intersect_tris(Ray<T> &ray, const uint32_t node_idx,
+                      const std::vector<Triangle<T>> &tris) {
     BVHNode &node = nodes[node_idx];
-    AABB<double> node_aabb{node.aabb.min.as_double(),
-                           node.aabb.max.as_double()};
+    AABB<T> node_aabb{node.aabb.min.as<T>(), node.aabb.max.as<T>()};
     if (!intersect_ray_aabb(ray, node_aabb))
       return;
     if (node.is_leaf()) {
@@ -237,7 +237,7 @@ int main(int argc, char *argv[]) {
   std::vector<Triangle<float>> tris_float;
   tris_float.reserve(tris.size());
   for (const auto &t : tris) {
-    tris_float.push_back({t.a.as_float(), t.b.as_float(), t.c.as_float()});
+    tris_float.push_back({t.a.as<float>(), t.b.as<float>(), t.c.as<float>()});
   }
 
   std::vector<AABB<float>> aabbs;

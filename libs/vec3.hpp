@@ -71,8 +71,7 @@ template <typename T> struct Vec3 {
 
   T length_squared() const { return this->dot(*this); }
   T length() const { return std::sqrt(length_squared()); }
-  Vec3<float> as_float() const { return {float(x), float(y), float(z)}; }
-  Vec3<double> as_double() const { return {double(x), double(y), double(z)}; }
+  template <typename U> Vec3<U> as() const { return {U(x), U(y), U(z)}; }
   Vec3<T> normalized() const {
     T len = length();
     if (len > 0) {
