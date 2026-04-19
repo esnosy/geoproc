@@ -254,7 +254,7 @@ int main(int argc, char *argv[]) {
   std::cout << "Built BVH in " << duration.count() << " ms" << std::endl;
 
   auto aspect_ratio = 16.0 / 9.0;
-  int image_width = 1920;
+  int image_width = 1920 * 4;
 
   // Calculate the image height, and ensure that it's at least 1.
   int image_height = int(image_width / aspect_ratio);
@@ -299,8 +299,9 @@ int main(int argc, char *argv[]) {
         const auto &n2 = vertex_normals[tri[1]];
         const auto &n3 = vertex_normals[tri[2]];
         auto normal = (1 - ray.u - ray.v) * n1 + ray.u * n2 + ray.v * n3;
-        uint32_t c = std::clamp(normal.dot(-ray.direction.normalized()) * 255.0,
-                                0.0, 255.0);
+        uint32_t c = std::clamp(
+            std::abs(normal.dot(-ray.direction.normalized())) * 255.0, 0.0,
+            255.0);
         ofs << c << ' ' << c << ' ' << c << '\n';
       } else {
         ofs << "0 0 0\n";
