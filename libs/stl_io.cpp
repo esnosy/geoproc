@@ -1,55 +1,57 @@
 #include <cassert>
 #include <cctype>
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 
 #include "fast_float.hpp"
-#include "mio.hpp"
 #include "stl_io.hpp"
 
 std::vector<Triangle<double>> read_stl(const char *path) {
   std::vector<Triangle<double>> tris;
 
-  std::ifstream ifs(path, std::ios::binary);
+  FILE *file = fopen(path, "rb");
 
-  ifs.seekg(80, std::ios::beg);
+  fseek(file, 80, SEEK_SET);
   uint32_t num_tris;
-  ifs.read(reinterpret_cast<char *>(&num_tris), sizeof(uint32_t));
+  fread(&num_tris, sizeof(uint32_t), 1, file);
 
   uint64_t expected_size = 50 * uint64_t(num_tris) + 84;
 
-  ifs.seekg(0, std::ios::end);
-  auto file_size = ifs.tellg();
+  fseek(file, 0, SEEK_END);
+  auto file_size = ftell(file);
 
   if (file_size == expected_size) {
-    ifs.seekg(84, std::ios::beg);
+    fseek(file, 84, SEEK_SET);
     tris.reserve(num_tris);
     for (uint32_t i = 0; i < num_tris; i++) {
       Triangle<double> t;
       float normal[3];
-      ifs.read(reinterpret_cast<char *>(normal), sizeof(float[3]));
+      fread(normal, sizeof(float[3]), 1, file);
       for (int j = 0; j < 3; j++) {
         float buf[3];
-        ifs.read(reinterpret_cast<char *>(buf), sizeof(float[3]));
+        fread(buf, sizeof(float[3]), 1, file);
         t[j] = Vec3<double>(buf);
       }
       uint16_t attribute_byte_count;
-      ifs.read(reinterpret_cast<char *>(&attribute_byte_count),
-               sizeof(uint16_t));
+      fread(&attribute_byte_count, sizeof(uint16_t), 1, file);
       tris.push_back(t);
     }
   } else {
-    ifs.seekg(0, std::ios::beg);
+    fseek(file, 0, SEEK_SET);
 
-    mio::mmap_source mmap(path);
-    size_t mmap_offset = 0;
+    char *file_buf = (char *)malloc(file_size);
+    fread(file_buf, 1, file_size, file);
+
+    size_t file_buf_offset = 0;
 
     auto compare_token = [&](const char *token, size_t token_size) {
-      if (mmap_offset + token_size > mmap.size())
+      if (file_buf_offset + token_size > file_size)
         return false;
       for (size_t i = 0; i < token_size; i++) {
-        if (mmap[mmap_offset + i] != token[i]) {
+        if (file_buf[file_buf_offset + i] != token[i]) {
           return false;
         }
       }
@@ -57,27 +59,29 @@ std::vector<Triangle<double>> read_stl(const char *path) {
     };
 
     auto skip_spaces = [&]() {
-      while (mmap_offset < mmap.size() && std::isspace(mmap[mmap_offset])) {
-        ++mmap_offset;
+      while (file_buf_offset < file_size &&
+             std::isspace(file_buf[file_buf_offset])) {
+        ++file_buf_offset;
       }
     };
 
     auto skip_token = [&]() {
-      while (mmap_offset < mmap.size() && !std::isspace(mmap[mmap_offset])) {
-        ++mmap_offset;
+      while (file_buf_offset < file_size &&
+             !std::isspace(file_buf[file_buf_offset])) {
+        ++file_buf_offset;
       }
     };
 
     auto read_vertex = [&](Vec3<double> &output) {
       for (int i = 0; i < 3; i++) {
-        fast_float::from_chars(mmap.data() + mmap_offset,
-                               mmap.data() + mmap.size(), output[i]);
+        fast_float::from_chars(file_buf + file_buf_offset, file_buf + file_size,
+                               output[i]);
         skip_token();
         skip_spaces();
       }
     };
 
-    while (mmap_offset < mmap.size()) {
+    while (file_buf_offset < file_size) {
       skip_spaces();
       if (compare_token("vertex", 6)) {
         Triangle<double> t;
