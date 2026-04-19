@@ -81,11 +81,14 @@ template <typename T> struct Ray_Triangle_Intersection {
   bool hit = false;
 };
 
+template <typename T> struct Ray_Triangles_Intersection {
+  Ray_Triangle_Intersection<T> intersection;
+  uint32_t tri_idx;
+};
+
 template <typename T> struct Ray {
   Vec3<T> origin;
   Vec3<T> direction;
-  Ray_Triangle_Intersection<T> intersection;
-  size_t tri_idx;
   Ray(const Vec3<T> &origin, const Vec3<T> &direction)
       : origin(origin), direction(direction) {}
 };
@@ -145,44 +148,51 @@ bool intersect_ray_aabb(const Ray<T> &ray, const AABB<T> &aabb) {
 }
 
 struct BVH {
+public:
   BVH_Node *nodes;
   std::vector<uint32_t> indices;
 
+private:
+  template <typename T>
+  void intersect_tris(Ray<T> &ray, const std::vector<Triangle<T>> &tris,
+                      uint32_t node_idx,
+                      Ray_Triangles_Intersection<T> &tris_result) {
+    BVH_Node &node = nodes[node_idx];
+    AABB<T> node_aabb{node.aabb.min.as<T>(), node.aabb.max.as<T>()};
+    if (!intersect_ray_aabb(ray, node_aabb)) {
+      return;
+    }
+    if (node.is_leaf()) {
+      for (uint32_t i = 0; i < node.prim_count; i++) {
+        auto tri_idx = indices[node.left_first + i];
+        auto tri_result = intersect_ray_triangle(ray, tris[tri_idx]);
+        if (tri_result.hit) {
+          if (tris_result.intersection.hit) {
+            if (tri_result.t < tris_result.intersection.t) {
+              tris_result.intersection = tri_result;
+              tris_result.tri_idx = tri_idx;
+            }
+          } else {
+            tris_result.intersection = tri_result;
+            tris_result.tri_idx = tri_idx;
+          }
+        }
+      }
+    } else {
+      intersect_tris(ray, tris, node.left_first, tris_result);
+      intersect_tris(ray, tris, node.left_first + 1, tris_result);
+    }
+  }
+
+public:
   void free() { _aligned_free(nodes); }
 
   template <typename T>
-  void intersect_tris(Ray<T> &ray, const std::vector<Triangle<T>> &tris) {
-    std::stack<uint32_t> stack;
-    stack.push(0);
-    while (!stack.empty()) {
-      uint32_t node_idx = stack.top();
-      stack.pop();
-      BVH_Node &node = nodes[node_idx];
-      AABB<T> node_aabb{node.aabb.min.as<T>(), node.aabb.max.as<T>()};
-      if (!intersect_ray_aabb(ray, node_aabb)) {
-        continue;
-      }
-      if (node.is_leaf()) {
-        for (uint32_t i = 0; i < node.prim_count; i++) {
-          auto tri_idx = indices[node.left_first + i];
-          auto result = intersect_ray_triangle(ray, tris[tri_idx]);
-          if (result.hit) {
-            if (ray.intersection.hit) {
-              if (result.t < ray.intersection.t) {
-                ray.intersection = result;
-                ray.tri_idx = tri_idx;
-              }
-            } else {
-              ray.intersection = result;
-              ray.tri_idx = tri_idx;
-            }
-          }
-        }
-      } else {
-        stack.push(node.left_first);
-        stack.push(node.left_first + 1);
-      }
-    }
+  Ray_Triangles_Intersection<T>
+  intersect_tris(Ray<T> &ray, const std::vector<Triangle<T>> &tris) {
+    Ray_Triangles_Intersection<T> tris_result;
+    intersect_tris(ray, tris, 0, tris_result);
+    return tris_result;
   }
 };
 
@@ -324,7 +334,7 @@ int main(int argc, char *argv[]) {
       viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
   std::ofstream ofs("output.ppm", std::ios::binary);
-  ofs << "P3\n" << image_width << " " << image_height << "\n255\n";
+  ofs << "P6\n" << image_width << " " << image_height << "\n255\n";
 
   t0 = std::chrono::high_resolution_clock::now();
   for (int j = 0; j < image_height; j++) {
@@ -333,20 +343,23 @@ int main(int argc, char *argv[]) {
                           (double(j) * pixel_delta_v);
       auto ray_direction = pixel_center - camera_center;
       Ray<double> ray(camera_center, ray_direction);
-      bvh.intersect_tris(ray, tris);
-      if (ray.intersection.hit) {
-        const auto &tri = mesh.tris[ray.tri_idx];
+      auto result = bvh.intersect_tris(ray, tris);
+      if (result.intersection.hit) {
+        const auto &tri = mesh.tris[result.tri_idx];
         const auto &n1 = vertex_normals[tri[0]];
         const auto &n2 = vertex_normals[tri[1]];
         const auto &n3 = vertex_normals[tri[2]];
-        auto normal = (1 - ray.intersection.u - ray.intersection.v) * n1 +
-                      ray.intersection.u * n2 + ray.intersection.v * n3;
+        auto normal = (1 - result.intersection.u - result.intersection.v) * n1 +
+                      result.intersection.u * n2 + result.intersection.v * n3;
         uint32_t c = std::clamp(
             std::abs(normal.dot(-ray.direction.normalized())) * 255.0, 0.0,
             255.0);
-        ofs << c << ' ' << c << ' ' << c << '\n';
+
+        uint8_t color[3] = {uint8_t(c), uint8_t(c), uint8_t(c)};
+        ofs.write(reinterpret_cast<char *>(color), 3);
       } else {
-        ofs << "0 0 0\n";
+        uint8_t color[3] = {0, 0, 0};
+        ofs.write(reinterpret_cast<char *>(color), 3);
       }
     }
   }
