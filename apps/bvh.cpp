@@ -14,7 +14,7 @@
 #include "../libs/aabb.hpp"
 #include "../libs/stl_io.hpp"
 
-#if !(defined(__UCRT__) || defined(WIN32))
+#ifndef _WIN32
 #define _aligned_malloc(size, alignment) std::aligned_alloc(alignment, size)
 #define _aligned_free(ptr) std::free(ptr)
 #endif
