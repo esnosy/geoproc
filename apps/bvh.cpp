@@ -151,31 +151,36 @@ struct BVH {
   void free() { _aligned_free(nodes); }
 
   template <typename T>
-  void intersect_tris(Ray<T> &ray, const uint32_t node_idx,
-                      const std::vector<Triangle<T>> &tris) {
-    BVH_Node &node = nodes[node_idx];
-    AABB<T> node_aabb{node.aabb.min.as<T>(), node.aabb.max.as<T>()};
-    if (!intersect_ray_aabb(ray, node_aabb))
-      return;
-    if (node.is_leaf()) {
-      for (uint32_t i = 0; i < node.prim_count; i++) {
-        auto tri_idx = indices[node.left_first + i];
-        auto result = intersect_ray_triangle(ray, tris[tri_idx]);
-        if (result.hit) {
-          if (ray.intersection.hit) {
-            if (result.t < ray.intersection.t) {
+  void intersect_tris(Ray<T> &ray, const std::vector<Triangle<T>> &tris) {
+    std::stack<uint32_t> stack;
+    stack.push(0);
+    while (!stack.empty()) {
+      uint32_t node_idx = stack.top();
+      stack.pop();
+      BVH_Node &node = nodes[node_idx];
+      AABB<T> node_aabb{node.aabb.min.as<T>(), node.aabb.max.as<T>()};
+      if (!intersect_ray_aabb(ray, node_aabb))
+        continue;
+      if (node.is_leaf()) {
+        for (uint32_t i = 0; i < node.prim_count; i++) {
+          auto tri_idx = indices[node.left_first + i];
+          auto result = intersect_ray_triangle(ray, tris[tri_idx]);
+          if (result.hit) {
+            if (ray.intersection.hit) {
+              if (result.t < ray.intersection.t) {
+                ray.intersection = result;
+                ray.tri_idx = tri_idx;
+              }
+            } else {
               ray.intersection = result;
               ray.tri_idx = tri_idx;
             }
-          } else {
-            ray.intersection = result;
-            ray.tri_idx = tri_idx;
           }
         }
+      } else {
+        stack.push(node.left_first);
+        stack.push(node.left_first + 1);
       }
-    } else {
-      intersect_tris(ray, node.left_first, tris);
-      intersect_tris(ray, node.left_first + 1, tris);
     }
   }
 };
@@ -327,7 +332,7 @@ int main(int argc, char *argv[]) {
                           (double(j) * pixel_delta_v);
       auto ray_direction = pixel_center - camera_center;
       Ray<double> ray(camera_center, ray_direction);
-      bvh.intersect_tris(ray, 0, tris);
+      bvh.intersect_tris(ray, tris);
       if (ray.intersection.hit) {
         const auto &tri = mesh.tris[ray.tri_idx];
         const auto &n1 = vertex_normals[tri[0]];
