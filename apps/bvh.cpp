@@ -159,8 +159,9 @@ struct BVH {
       stack.pop();
       BVH_Node &node = nodes[node_idx];
       AABB<T> node_aabb{node.aabb.min.as<T>(), node.aabb.max.as<T>()};
-      if (!intersect_ray_aabb(ray, node_aabb))
+      if (!intersect_ray_aabb(ray, node_aabb)) {
         continue;
+      }
       if (node.is_leaf()) {
         for (uint32_t i = 0; i < node.prim_count; i++) {
           auto tri_idx = indices[node.left_first + i];
