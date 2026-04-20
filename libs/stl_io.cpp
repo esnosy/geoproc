@@ -60,7 +60,7 @@ std::vector<Triangle<double>> read_stl(const char *path) {
     ifs.seekg(84, std::ios::beg);
     tris.reserve(num_tris);
     for (uint32_t i = 0; i < num_tris; i++) {
-      Triangle<double> t;
+      Triangle<double> t = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
       float normal[3];
       ifs.read(reinterpret_cast<char *>(normal), sizeof(float[3]));
       for (int j = 0; j < 3; j++) {
@@ -83,7 +83,7 @@ std::vector<Triangle<double>> read_stl(const char *path) {
     while (file_buf.offset < file_buf.size) {
       file_buf.skip_spaces();
       if (file_buf.compare_token("vertex", 6)) {
-        Triangle<double> t;
+        Triangle<double> t = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
         file_buf.skip_token();  // Skip "vertex"
         file_buf.skip_spaces(); // Skip spaces after "vertex"
         file_buf.read_vertex(t.a);

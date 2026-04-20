@@ -9,9 +9,7 @@
 template <typename T> struct Vec3 {
   T x, y, z;
   Vec3(float buf[3]) : x(buf[0]), y(buf[1]), z(buf[2]) {}
-  Vec3() : x(0), y(0), z(0) {}
   Vec3(T x, T y, T z) : x(x), y(y), z(z) {}
-  Vec3(T v) : x(v), y(v), z(v) {}
   T &operator[](int i) { return (&x)[i]; }
   T operator[](int i) const { return (&x)[i]; }
 
@@ -77,7 +75,7 @@ template <typename T> struct Vec3 {
     if (len > 0) {
       return *this / len;
     } else {
-      return Vec3<T>(0.0);
+      return Vec3<T>({0.0, 0.0, 0.0});
     }
   }
 };

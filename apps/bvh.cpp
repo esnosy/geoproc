@@ -208,8 +208,8 @@ BVH build_bvh(const std::vector<AABB<float>> &aabbs) {
 
   auto update_node_bounds = [&](uint32_t node_idx) {
     BVH_Node &node = nodes[node_idx];
-    node.aabb.min = Vec3<float>(1e30f);
-    node.aabb.max = Vec3<float>(-1e30f);
+    node.aabb.min = Vec3<float>(1e30f, 1e30f, 1e30f);
+    node.aabb.max = Vec3<float>(-1e30f, -1e30f, -1e30f);
     for (uint32_t first = node.left_first, i = 0; i < node.prim_count; i++) {
       const AABB<float> &aabb = aabbs[indices[first + i]];
       node.aabb = node.aabb.join(aabb);
