@@ -7,6 +7,7 @@
 #include <random>
 #include <vector>
 
+#include "../libs/ply_io.hpp"
 #include "../libs/stl_io.hpp"
 
 int main(int argc, char *argv[]) {
@@ -65,15 +66,5 @@ int main(int argc, char *argv[]) {
   duration = std::chrono::duration<double, std::milli>(t1 - t0);
   std::cout << "Sampled " << num_samples << " points in " << duration.count()
             << " ms" << std::endl;
-
-  std::ofstream out(output_path, std::ios::binary);
-  out << "ply\n"
-      << "format binary_little_endian 1.0\n"
-      << "element vertex " << samples.size() << '\n'
-      << "property double x\n"
-      << "property double y\n"
-      << "property double z\n"
-      << "end_header\n";
-  out.write(reinterpret_cast<const char *>(samples.data()),
-            samples.size() * sizeof(Vec3<double>));
+  write_points_to_ply(output_path, samples);
 }
