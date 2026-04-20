@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <string>
 #include <string_view>
 #include <unordered_set>
 #include <vector>
@@ -73,8 +74,7 @@ int main(int argc, char *argv[]) {
   uint32_t version;
   ifs.read(reinterpret_cast<char *>(&version), sizeof(uint32_t));
 
-  std::vector<Triangle<double>> tris;
-  std::vector<Vec3<double>> points;
+  size_t i = 0;
 
   char chunk_id[4];
   uint32_t chunk_size;
@@ -90,12 +90,17 @@ int main(int argc, char *argv[]) {
       std::cout << "Size: " << size_x << " x " << size_y << " x " << size_z
                 << std::endl;
     } else if (std::string_view(chunk_id, 4) == "XYZI") {
+      i += 1;
       uint32_t num_voxels;
       ifs.read(reinterpret_cast<char *>(&num_voxels), sizeof(uint32_t));
       uint8_t *voxels = (uint8_t *)malloc(4 * num_voxels);
       ifs.read(reinterpret_cast<char *>(voxels), 4 * num_voxels);
+
+      std::vector<Triangle<double>> tris;
+
       std::unordered_set<Vec3<double>> dense_voxels;
       dense_voxels.reserve(num_voxels);
+
       for (size_t i = 0; i < 4 * num_voxels; i += 4) {
         auto x = (double)voxels[i];
         auto y = (double)voxels[i + 1];
@@ -109,7 +114,6 @@ int main(int argc, char *argv[]) {
         auto x = key.x;
         auto y = key.y;
         auto z = key.z;
-        points.push_back({x, y, z});
         // -x
         auto it = dense_voxels.find({x - 1, y, z});
         if (it == dense_voxels.end()) {
@@ -150,10 +154,10 @@ int main(int argc, char *argv[]) {
               {{x + 1, y, z + 1}, {x + 1, y + 1, z + 1}, {x, y + 1, z + 1}});
         }
       }
+      std::string filename = "vox" + std::to_string(i) + ".stl";
+      write_stl_binary(filename.c_str(), tris);
     } else {
       ifs.seekg(chunk_size, std::ios::cur);
     }
   }
-  write_stl_binary("output.stl", tris);
-  write_points_to_ply("output.ply", points);
 }
