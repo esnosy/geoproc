@@ -22,14 +22,14 @@
 #define _aligned_free(ptr) std::free(ptr)
 #endif
 
-template <typename T> struct Indexed_Mesh {
+template <typename T> struct Indexed_Tri_Mesh {
   std::vector<Vec3<T>> vertices;
   std::vector<std::array<uint32_t, 3>> tris;
 
-  static Indexed_Mesh from_stl_tris(const std::vector<Triangle<T>> &tris) {
+  static Indexed_Tri_Mesh from_stl_tris(const std::vector<Triangle<T>> &tris) {
     std::unordered_map<Vec3<T>, uint32_t> vertex_to_index;
     vertex_to_index.reserve(tris.size() * 3);
-    Indexed_Mesh<T> mesh;
+    Indexed_Tri_Mesh<T> mesh;
     mesh.tris.reserve(tris.size());
     mesh.vertices.reserve(tris.size() * 3);
     for (const auto &t : tris) {
@@ -282,7 +282,7 @@ int main(int argc, char *argv[]) {
   std::cout << "Read " << tris.size() << " triangles in " << duration.count()
             << " ms" << std::endl;
 
-  auto mesh = Indexed_Mesh<double>::from_stl_tris(tris);
+  auto mesh = Indexed_Tri_Mesh<double>::from_stl_tris(tris);
   auto vertex_normals = mesh.calc_vertex_normals();
 
   std::vector<Triangle<float>> tris_float;
