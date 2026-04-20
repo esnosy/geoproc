@@ -6,9 +6,11 @@
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
+#include "../libs/indexed_tri_mesh.hpp"
 #include "../libs/ply_io.hpp"
 #include "../libs/stl_io.hpp"
 #include "../libs/vec3.hpp"
@@ -90,35 +92,39 @@ int main(int argc, char *argv[]) {
       std::cout << "Size: " << size_x << " x " << size_y << " x " << size_z
                 << std::endl;
     } else if (std::string_view(chunk_id, 4) == "XYZI") {
-      i += 1;
       uint32_t num_voxels;
       ifs.read(reinterpret_cast<char *>(&num_voxels), sizeof(uint32_t));
       uint8_t *voxels = (uint8_t *)malloc(4 * num_voxels);
       ifs.read(reinterpret_cast<char *>(voxels), 4 * num_voxels);
 
       std::vector<Triangle<double>> tris;
+      std::vector<uint8_t> color_indices;
 
-      std::unordered_set<Vec3<double>> dense_voxels;
+      std::unordered_map<Vec3<double>, uint8_t> dense_voxels;
       dense_voxels.reserve(num_voxels);
 
       for (size_t i = 0; i < 4 * num_voxels; i += 4) {
         auto x = (double)voxels[i];
         auto y = (double)voxels[i + 1];
         auto z = (double)voxels[i + 2];
-        dense_voxels.insert(Vec3<double>{x, y, z});
+        auto color_index = voxels[i + 3];
+        dense_voxels.insert({Vec3<double>{x, y, z}, color_index});
       }
       free(voxels);
       std::cout << dense_voxels.size() << " " << num_voxels << std::endl;
       assert(dense_voxels.size() == num_voxels);
-      for (const auto &key : dense_voxels) {
+      for (const auto &[key, value] : dense_voxels) {
         auto x = key.x;
         auto y = key.y;
         auto z = key.z;
+        auto color_index = value;
         // -x
         auto it = dense_voxels.find({x - 1, y, z});
         if (it == dense_voxels.end()) {
           tris.push_back({{x, y, z}, {x, y, z + 1}, {x, y + 1, z}});
           tris.push_back({{x, y + 1, z}, {x, y, z + 1}, {x, y + 1, z + 1}});
+          color_indices.push_back(color_index);
+          color_indices.push_back(color_index);
         }
         // x
         it = dense_voxels.find({x + 1, y, z});
@@ -126,12 +132,16 @@ int main(int argc, char *argv[]) {
           tris.push_back({{x + 1, y, z}, {x + 1, y + 1, z}, {x + 1, y, z + 1}});
           tris.push_back(
               {{x + 1, y + 1, z}, {x + 1, y + 1, z + 1}, {x + 1, y, z + 1}});
+          color_indices.push_back(color_index);
+          color_indices.push_back(color_index);
         }
         // -y
         it = dense_voxels.find({x, y - 1, z});
         if (it == dense_voxels.end()) {
           tris.push_back({{x, y, z}, {x + 1, y, z}, {x, y, z + 1}});
           tris.push_back({{x, y, z + 1}, {x + 1, y, z}, {x + 1, y, z + 1}});
+          color_indices.push_back(color_index);
+          color_indices.push_back(color_index);
         }
         // y
         it = dense_voxels.find({x, y + 1, z});
@@ -139,12 +149,16 @@ int main(int argc, char *argv[]) {
           tris.push_back({{x, y + 1, z}, {x, y + 1, z + 1}, {x + 1, y + 1, z}});
           tris.push_back(
               {{x, y + 1, z + 1}, {x + 1, y + 1, z + 1}, {x + 1, y + 1, z}});
+          color_indices.push_back(color_index);
+          color_indices.push_back(color_index);
         }
         // -z
         it = dense_voxels.find({x, y, z - 1});
         if (it == dense_voxels.end()) {
           tris.push_back({{x, y, z}, {x, y + 1, z}, {x + 1, y, z}});
           tris.push_back({{x + 1, y, z}, {x, y + 1, z}, {x + 1, y + 1, z}});
+          color_indices.push_back(color_index);
+          color_indices.push_back(color_index);
         }
         // +z
         it = dense_voxels.find({x, y, z + 1});
@@ -152,10 +166,39 @@ int main(int argc, char *argv[]) {
           tris.push_back({{x, y, z + 1}, {x + 1, y, z + 1}, {x, y + 1, z + 1}});
           tris.push_back(
               {{x + 1, y, z + 1}, {x + 1, y + 1, z + 1}, {x, y + 1, z + 1}});
+          color_indices.push_back(color_index);
+          color_indices.push_back(color_index);
         }
       }
       std::string filename = "vox" + std::to_string(i) + ".stl";
+      std::string filename_ply = "vox" + std::to_string(i) + ".ply";
       write_stl_binary(filename.c_str(), tris);
+
+      auto mesh = Indexed_Tri_Mesh<double>::from_stl_tris(tris);
+
+      assert(mesh.tris.size() == color_indices.size());
+
+      std::ofstream ofs(filename_ply, std::ios::binary);
+      ofs << "ply\n"
+          << "format binary_little_endian 1.0\n"
+          << "element vertex " << mesh.vertices.size() << '\n'
+          << "property double x\n"
+          << "property double y\n"
+          << "property double z\n"
+          << "element face " << mesh.tris.size() << '\n'
+          << "property list uchar uint vertex_indices\n"
+          << "property uchar material_index\n"
+          << "end_header\n";
+      ofs.write(reinterpret_cast<char *>(mesh.vertices.data()),
+                mesh.vertices.size() * sizeof(Vec3<double>));
+      uint8_t num_edges = 3;
+      for (size_t i = 0; i < mesh.tris.size(); i++) {
+        ofs.write(reinterpret_cast<char *>(&num_edges), sizeof(uint8_t));
+        ofs.write(reinterpret_cast<char *>(mesh.tris[i].data()),
+                  sizeof(uint32_t[3]));
+        ofs.write(reinterpret_cast<char *>(&color_indices[i]), sizeof(uint8_t));
+      }
+      i++;
     } else {
       ifs.seekg(chunk_size, std::ios::cur);
     }
