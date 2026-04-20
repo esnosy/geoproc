@@ -1,10 +1,11 @@
 #include <array>
+#include <cassert>
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <string_view>
-#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "../libs/ply_io.hpp"
@@ -93,15 +94,17 @@ int main(int argc, char *argv[]) {
       ifs.read(reinterpret_cast<char *>(&num_voxels), sizeof(uint32_t));
       uint8_t *voxels = (uint8_t *)malloc(4 * num_voxels);
       ifs.read(reinterpret_cast<char *>(voxels), 4 * num_voxels);
-      std::unordered_map<Vec3<double>, bool> dense_voxels;
+      std::unordered_set<Vec3<double>> dense_voxels;
       dense_voxels.reserve(num_voxels);
       for (size_t i = 0; i < 4 * num_voxels; i += 4) {
         auto x = (double)voxels[i];
         auto y = (double)voxels[i + 1];
         auto z = (double)voxels[i + 2];
-        dense_voxels.insert({{x, y, z}, true});
+        dense_voxels.insert(Vec3<double>{x, y, z});
       }
-      for (auto &[key, value] : dense_voxels) {
+      std::cout << dense_voxels.size() << " " << num_voxels << std::endl;
+      assert(dense_voxels.size() == num_voxels);
+      for (const auto &key : dense_voxels) {
         auto x = key.x;
         auto y = key.y;
         auto z = key.z;
