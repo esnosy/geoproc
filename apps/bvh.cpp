@@ -26,7 +26,7 @@ template <typename T> struct Indexed_Tri_Mesh {
   std::vector<Vec3<T>> vertices;
   std::vector<std::array<uint32_t, 3>> tris;
 
-  static Indexed_Tri_Mesh from_stl_tris(const std::vector<Triangle<T>> &tris) {
+  static Indexed_Tri_Mesh<T> from_stl_tris(const std::vector<Triangle<T>> &tris) {
     std::unordered_map<Vec3<T>, uint32_t> vertex_to_index;
     vertex_to_index.reserve(tris.size() * 3);
     Indexed_Tri_Mesh<T> mesh;
