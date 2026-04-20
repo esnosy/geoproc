@@ -84,14 +84,7 @@ int main(int argc, char *argv[]) {
   while (ifs.read(chunk_id, 4)) {
     ifs.read(reinterpret_cast<char *>(&chunk_size), sizeof(uint32_t));
     ifs.read(reinterpret_cast<char *>(&child_chunk_size), sizeof(uint32_t));
-    uint32_t size_x, size_y, size_z;
-    if (std::string_view(chunk_id, 4) == "SIZE") {
-      ifs.read(reinterpret_cast<char *>(&size_x), sizeof(uint32_t));
-      ifs.read(reinterpret_cast<char *>(&size_y), sizeof(uint32_t));
-      ifs.read(reinterpret_cast<char *>(&size_z), sizeof(uint32_t));
-      std::cout << "Size: " << size_x << " x " << size_y << " x " << size_z
-                << std::endl;
-    } else if (std::string_view(chunk_id, 4) == "XYZI") {
+    if (std::string_view(chunk_id, 4) == "XYZI") {
       uint32_t num_voxels;
       ifs.read(reinterpret_cast<char *>(&num_voxels), sizeof(uint32_t));
       uint8_t *voxels = (uint8_t *)malloc(4 * num_voxels);
