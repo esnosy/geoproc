@@ -102,6 +102,7 @@ int main(int argc, char *argv[]) {
         auto z = (double)voxels[i + 2];
         dense_voxels.insert(Vec3<double>{x, y, z});
       }
+      free(voxels);
       std::cout << dense_voxels.size() << " " << num_voxels << std::endl;
       assert(dense_voxels.size() == num_voxels);
       for (const auto &key : dense_voxels) {
