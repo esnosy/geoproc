@@ -3,3 +3,5 @@ build
 *.ply
 *.ppm
 *.stl
+*.obj
+*.mtl
