@@ -1,3 +1,9 @@
 https://raytracing.github.io/books/RayTracingInOneWeekend.html
 https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/
 https://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations#SamplingaTriangle
+https://en.wikipedia.org/w/index.php?title=Wavefront_.obj_file&oldid=1312058006
+https://en.wikipedia.org/w/index.php?title=PLY_(file_format)&oldid=1336327694
+https://en.wikipedia.org/w/index.php?title=STL_(file_format)&oldid=1342936623
+https://github.com/huhlig/voxfile/blob/64433d9320d2684760e3161ecb7a50ec37d8adfc/vox.md
+https://github.com/ephtracy/voxel-model/blob/8044f9eb086216f3485cdaa525a52120d72274e9/MagicaVoxel-file-format-vox.txt
+https://github.com/ephtracy/voxel-model/blob/8044f9eb086216f3485cdaa525a52120d72274e9/MagicaVoxel-file-format-vox-extension.txt
