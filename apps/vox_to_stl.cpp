@@ -65,10 +65,10 @@ int main(int argc, char *argv[]) {
     std::cerr << "Expected arguments: /path/to/input.vox" << std::endl;
     return 1;
   }
-  const char *input_path = argv[1];
-  std::ifstream ifs(input_path, std::ios::binary);
+  const char *filename_vox = argv[1];
+  std::ifstream ifs(filename_vox, std::ios::binary);
   if (!ifs) {
-    std::cerr << "Failed to open file: " << input_path << std::endl;
+    std::cerr << "Failed to open file: " << filename_vox << std::endl;
     return 1;
   }
   char magic[4];
@@ -76,7 +76,19 @@ int main(int argc, char *argv[]) {
   uint32_t version;
   ifs.read(reinterpret_cast<char *>(&version), sizeof(uint32_t));
 
-  size_t i = 0;
+  size_t xyzi_running_index = 0;
+
+  // OBJ file references vertices by their global index, so we need to
+  // keep count of how many vertices have been written to add that to the
+  // local triangle indices
+  size_t obj_running_vertex_count = 0;
+
+  std::string filename_obj = "vox.obj";
+  std::string filename_mtl = "vox.mtl";
+  std::ofstream ofs_obj(filename_obj, std::ios::binary);
+  std::ofstream ofs_mtl(filename_mtl, std::ios::binary);
+
+  ofs_obj << "mtllib " << filename_mtl << '\n';
 
   char chunk_id[4];
   uint32_t chunk_size;
@@ -163,35 +175,61 @@ int main(int argc, char *argv[]) {
           color_indices.push_back(color_index);
         }
       }
-      std::string filename = "vox" + std::to_string(i) + ".stl";
-      std::string filename_ply = "vox" + std::to_string(i) + ".ply";
-      write_stl_binary(filename.c_str(), tris);
+      std::string filename_stl =
+          "vox" + std::to_string(xyzi_running_index) + ".stl";
+      std::string filename_ply =
+          "vox" + std::to_string(xyzi_running_index) + ".ply";
+      write_stl_binary(filename_stl.c_str(), tris);
 
       auto mesh = Indexed_Tri_Mesh<double>::from_stl_tris(tris);
 
       assert(mesh.tris.size() == color_indices.size());
+      std::unordered_map<uint8_t, std::vector<std::array<uint32_t, 3>>>
+          tris_grouped_by_color_index;
+      tris_grouped_by_color_index.reserve(256);
 
-      std::ofstream ofs(filename_ply, std::ios::binary);
-      ofs << "ply\n"
-          << "format binary_little_endian 1.0\n"
-          << "element vertex " << mesh.vertices.size() << '\n'
-          << "property double x\n"
-          << "property double y\n"
-          << "property double z\n"
-          << "element face " << mesh.tris.size() << '\n'
-          << "property list uchar uint vertex_indices\n"
-          << "property uchar material_index\n"
-          << "end_header\n";
-      ofs.write(reinterpret_cast<char *>(mesh.vertices.data()),
-                mesh.vertices.size() * sizeof(Vec3<double>));
+      for (size_t i = 0; i < color_indices.size(); i++) {
+        tris_grouped_by_color_index[color_indices[i]].push_back(mesh.tris[i]);
+      }
+
+      std::ofstream ofs_ply(filename_ply, std::ios::binary);
+      ofs_ply << "ply\n"
+              << "format binary_little_endian 1.0\n"
+              << "element vertex " << mesh.vertices.size() << '\n'
+              << "property double x\n"
+              << "property double y\n"
+              << "property double z\n"
+              << "element face " << mesh.tris.size() << '\n'
+              << "property list uchar uint vertex_indices\n"
+              << "property uchar material_index\n"
+              << "end_header\n";
+      ofs_ply.write(reinterpret_cast<char *>(mesh.vertices.data()),
+                    mesh.vertices.size() * sizeof(Vec3<double>));
       uint8_t num_edges = 3;
       for (size_t i = 0; i < mesh.tris.size(); i++) {
-        ofs.write(reinterpret_cast<char *>(&num_edges), sizeof(uint8_t));
-        ofs.write(reinterpret_cast<char *>(mesh.tris[i].data()),
-                  sizeof(uint32_t[3]));
-        ofs.write(reinterpret_cast<char *>(&color_indices[i]), sizeof(uint8_t));
+        ofs_ply.write(reinterpret_cast<char *>(&num_edges), sizeof(uint8_t));
+        ofs_ply.write(reinterpret_cast<char *>(mesh.tris[i].data()),
+                      sizeof(uint32_t[3]));
+        ofs_ply.write(reinterpret_cast<char *>(&color_indices[i]),
+                      sizeof(uint8_t));
       }
-      i++;
+
+      std::string obj_name = std::to_string(xyzi_running_index);
+      ofs_obj << "o " << obj_name << '\n';
+      for (const auto &v : mesh.vertices) {
+        ofs_obj << "v " << v.x << ' ' << v.y << ' ' << v.z << '\n';
+      }
+      for (const auto &[key, value] : tris_grouped_by_color_index) {
+        ofs_obj << "usemtl " << std::to_string(key) << '\n';
+        for (const auto &t : value) {
+          ofs_obj << "f " << t[0] + obj_running_vertex_count + 1 << ' '
+                  << t[1] + obj_running_vertex_count + 1 << ' '
+                  << t[2] + obj_running_vertex_count + 1 << '\n';
+        }
+      }
+      obj_running_vertex_count += mesh.vertices.size();
+
+      xyzi_running_index++;
     } else {
       ifs.seekg(chunk_size, std::ios::cur);
     }
