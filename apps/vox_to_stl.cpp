@@ -50,8 +50,15 @@ static DICT read_dict(std::ifstream &ifs) {
 }
 
 static float float_from_str(const std::string &str, float default_value) {
-  float result = default_value;
-  fast_float::from_chars(str.data(), str.data() + str.size(), result);
+  if (str.empty()) {
+    return default_value;
+  }
+  float result;
+  auto [ptr, ec] =
+      fast_float::from_chars(str.data(), str.data() + str.size(), result);
+  if (ec != std::errc()) {
+    return default_value;
+  }
   return result;
 }
 
@@ -79,16 +86,13 @@ union RGBA {
   RGBA(uint32_t rgba) : rgba(rgba) {}
 };
 
-struct OBJ_material {
-  std::array<float, 3> Ka = {1.0f, 1.0f, 1.0f}; // ambient color
-  std::array<float, 3> Kd = {1.0f, 1.0f, 1.0f}; // diffuse color
-  std::array<float, 3> Ks = {1.0f, 1.0f, 1.0f}; // specular color
-  std::array<float, 3> Ke = {0.0f, 0.0f, 0.0f}; // emission color
-  float Ns = 0;                                 // specular exponent
-  float d = 1.0f;                               // dissolve (opacity)
-  float Tr() const { return 1.0f - d; }
-  float Ni = 1.0f;   // optical density (index of refraction)
-  uint8_t illum = 2; // illumination model
+struct PBR_Material {
+  std::array<float, 3> base_color = {1.0f, 1.0f, 1.0f};
+  float metallic = 0.0f;
+  float roughness = 0.0f;
+  float ior = 1.0f;
+  float transmission = 0.0f;
+  float emission = 0.0f;
 };
 
 struct MATL_chunk {
@@ -114,21 +118,9 @@ int main(int argc, char *argv[]) {
 
   size_t model_id = 0;
 
-  // OBJ file references vertices by their global index, so we need to
-  // keep count of how many vertices have been written to add that to the
-  // local triangle indices
-  size_t obj_running_vertex_count = 0;
-
-  std::string filename_obj = "vox.obj";
-  std::string filename_mtl = "vox.mtl";
-  std::ofstream ofs_obj(filename_obj, std::ios::binary);
-  std::ofstream ofs_mtl(filename_mtl, std::ios::binary);
-
-  ofs_obj << "mtllib " << filename_mtl << '\n';
-
   std::vector<MATL_chunk> matl_chunks;
   matl_chunks.reserve(256);
-  OBJ_material obj_materials[256];
+  PBR_Material pbr_materials[256];
   RGBA palette[256] = {
       0x00000000, 0xffffffff, 0xffccffff, 0xff99ffff, 0xff66ffff, 0xff33ffff,
       0xff00ffff, 0xffffccff, 0xffccccff, 0xff99ccff, 0xff66ccff, 0xff33ccff,
@@ -208,8 +200,6 @@ int main(int argc, char *argv[]) {
         auto y = key.y;
         auto z = key.z;
         auto color_index = value;
-        std::cout << "Processing voxel at (" << x << ", " << y << ", " << z
-                  << ") with color index " << (int)color_index << std::endl;
         // -x
         auto it = dense_voxels.find({x - 1, y, z});
         if (it == dense_voxels.end()) {
@@ -262,9 +252,6 @@ int main(int argc, char *argv[]) {
           color_indices.push_back(color_index);
         }
       }
-      std::string filename_stl = "vox" + std::to_string(model_id) + ".stl";
-      std::string filename_ply = "vox" + std::to_string(model_id) + ".ply";
-      write_stl_binary(filename_stl.c_str(), tris);
 
       auto mesh = Indexed_Tri_Mesh<double>::from_stl_tris(tris);
 
@@ -283,51 +270,6 @@ int main(int argc, char *argv[]) {
                      mesh.tris.size() * sizeof(uint32_t[3]));
 
       assert(mesh.tris.size() == color_indices.size());
-      std::unordered_map<uint8_t, std::vector<std::array<uint32_t, 3>>>
-          tris_grouped_by_color_index;
-      tris_grouped_by_color_index.reserve(256);
-
-      for (size_t i = 0; i < color_indices.size(); i++) {
-        tris_grouped_by_color_index[color_indices[i]].push_back(mesh.tris[i]);
-      }
-
-      std::ofstream ofs_ply(filename_ply, std::ios::binary);
-      ofs_ply << "ply\n"
-              << "format binary_little_endian 1.0\n"
-              << "element vertex " << mesh.vertices.size() << '\n'
-              << "property double x\n"
-              << "property double y\n"
-              << "property double z\n"
-              << "element face " << mesh.tris.size() << '\n'
-              << "property list uchar uint vertex_indices\n"
-              << "property uchar material_index\n"
-              << "end_header\n";
-      ofs_ply.write(reinterpret_cast<char *>(mesh.vertices.data()),
-                    mesh.vertices.size() * sizeof(Vec3<double>));
-      uint8_t num_edges = 3;
-      for (size_t i = 0; i < mesh.tris.size(); i++) {
-        ofs_ply.write(reinterpret_cast<char *>(&num_edges), sizeof(uint8_t));
-        ofs_ply.write(reinterpret_cast<char *>(mesh.tris[i].data()),
-                      sizeof(uint32_t[3]));
-        ofs_ply.write(reinterpret_cast<char *>(&color_indices[i]),
-                      sizeof(uint8_t));
-      }
-
-      std::string obj_name = std::to_string(model_id);
-      ofs_obj << "o " << obj_name << '\n';
-      for (const auto &v : mesh.vertices) {
-        ofs_obj << "v " << v.x << ' ' << v.y << ' ' << v.z << '\n';
-      }
-      for (const auto &[key, value] : tris_grouped_by_color_index) {
-        ofs_obj << "usemtl " << std::to_string(key) << '\n';
-        for (const auto &t : value) {
-          ofs_obj << "f " << t[0] + obj_running_vertex_count + 1 << ' '
-                  << t[1] + obj_running_vertex_count + 1 << ' '
-                  << t[2] + obj_running_vertex_count + 1 << '\n';
-        }
-      }
-      obj_running_vertex_count += mesh.vertices.size();
-
       model_id++;
     } else if (std::string_view(chunk_id, 4) == "MATL") {
       std::cout << "Found MATL chunk!" << std::endl;
@@ -387,7 +329,7 @@ int main(int argc, char *argv[]) {
     r = std::pow(r, 2.2f);
     g = std::pow(g, 2.2f);
     b = std::pow(b, 2.2f);
-    obj_materials[i].Kd = {r, g, b};
+    pbr_materials[i].base_color = {r, g, b};
   }
 
   // Set material properties from MATL chunks
@@ -396,50 +338,15 @@ int main(int argc, char *argv[]) {
     if (matl_chunk.id == 256) {
       continue;
     }
-    auto matl_chunk_type = matl_chunk.props["_type"];
-    if (matl_chunk_type.empty()) {
-      continue;
-    }
-    auto &obj_mat = obj_materials[matl_chunk.id];
-    const auto &diffuse_color = obj_mat.Kd;
-
-    if (matl_chunk_type == "_emit") {
-      auto emit_str = matl_chunk.props["_emit"];
-      float emit = float_from_str(emit_str, 0.0f);
-      obj_mat.Ke = {diffuse_color[0] * emit, diffuse_color[1] * emit,
-                    diffuse_color[2] * emit};
-    } else if (matl_chunk_type == "_metal") {
-      obj_mat.illum = 3;
-      auto metal_str = matl_chunk.props["_metal"];
-      float metal = float_from_str(metal_str, 0.0f);
-      if (metal > 0.0f) {
-        obj_mat.Ka = {metal, metal, metal};
-      }
-      auto ri_str = matl_chunk.props["_ri"];
-      obj_mat.Ni = float_from_str(ri_str, 1.3f);
-
-      auto roughness_str = matl_chunk.props["_rough"];
-      auto roughness = float_from_str(roughness_str, 0.0f);
-      obj_mat.Ns = 1.0f - roughness;
-      obj_mat.Ns *= obj_mat.Ns * 1000.0f;
-    }
+    auto &pbr_mat = pbr_materials[matl_chunk.id];
+    pbr_mat.emission = float_from_str(matl_chunk.props["_emit"], 0.0f);
+    pbr_mat.metallic = float_from_str(matl_chunk.props["_metal"], 0.0f);
+    pbr_mat.ior = float_from_str(matl_chunk.props["_ri"], 1.3f);
+    pbr_mat.roughness = float_from_str(matl_chunk.props["_rough"], 0.0f);
+    pbr_mat.transmission = float_from_str(matl_chunk.props["_trans"], 0.0f);
   }
 
-  // Write materials to .mtl file
-  for (size_t i = 0; i < 256; i++) {
-    ofs_mtl << "newmtl " << std::to_string(i) << '\n';
-    ofs_mtl << "Ka " << obj_materials[i].Ka[0] << ' ' << obj_materials[i].Ka[1]
-            << ' ' << obj_materials[i].Ka[2] << '\n';
-    ofs_mtl << "Kd " << obj_materials[i].Kd[0] << ' ' << obj_materials[i].Kd[1]
-            << ' ' << obj_materials[i].Kd[2] << '\n';
-    ofs_mtl << "Ks " << obj_materials[i].Ks[0] << ' ' << obj_materials[i].Ks[1]
-            << ' ' << obj_materials[i].Ks[2] << '\n';
-    ofs_mtl << "Ke " << obj_materials[i].Ke[0] << ' ' << obj_materials[i].Ke[1]
-            << ' ' << obj_materials[i].Ke[2] << '\n';
-    ofs_mtl << "Ns " << obj_materials[i].Ns << '\n';
-    ofs_mtl << "d " << obj_materials[i].d << '\n';
-    ofs_mtl << "Tr " << obj_materials[i].Tr() << '\n';
-    ofs_mtl << "Ni " << obj_materials[i].Ni << '\n';
-    ofs_mtl << "illum " << static_cast<int>(obj_materials[i].illum) << '\n';
-  }
+  std::ofstream ofs_pbr("pbr_materials.bin", std::ios::binary);
+  ofs_pbr.write(reinterpret_cast<const char *>(pbr_materials),
+                sizeof(PBR_Material) * 256);
 }
