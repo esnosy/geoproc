@@ -268,6 +268,20 @@ int main(int argc, char *argv[]) {
 
       auto mesh = Indexed_Tri_Mesh<double>::from_stl_tris(tris);
 
+      std::string filename_vertices =
+          "vox" + std::to_string(model_id) + "_vertices.bin";
+      std::ofstream ofs_vertices(filename_vertices, std::ios::binary);
+      for (const auto &v : mesh.vertices) {
+        ofs_vertices.write(reinterpret_cast<const char *>(&v.as<float>()),
+                           sizeof(Vec3<float>));
+      }
+
+      std::string filename_tris =
+          "vox" + std::to_string(model_id) + "_tris.bin";
+      std::ofstream ofs_tris(filename_tris, std::ios::binary);
+      ofs_tris.write(reinterpret_cast<const char *>(mesh.tris.data()),
+                     mesh.tris.size() * sizeof(uint32_t[3]));
+
       assert(mesh.tris.size() == color_indices.size());
       std::unordered_map<uint8_t, std::vector<std::array<uint32_t, 3>>>
           tris_grouped_by_color_index;
