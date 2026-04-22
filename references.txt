@@ -20,3 +20,6 @@ VOX file spec:
 https://github.com/huhlig/voxfile/blob/64433d9320d2684760e3161ecb7a50ec37d8adfc/vox.md
 https://github.com/ephtracy/voxel-model/blob/8044f9eb086216f3485cdaa525a52120d72274e9/MagicaVoxel-file-format-vox.txt
 https://github.com/ephtracy/voxel-model/blob/8044f9eb086216f3485cdaa525a52120d72274e9/MagicaVoxel-file-format-vox-extension.txt
+
+Gamma correction:
+https://web.archive.org/web/20260421205717/https://learnopengl.com/Advanced-Lighting/Gamma-Correction
