@@ -8,7 +8,7 @@
 
 template <typename T> struct Vec3 {
   T x, y, z;
-  Vec3(float buf[3]) : x(buf[0]), y(buf[1]), z(buf[2]) {}
+  Vec3(T buf[3]) : x(buf[0]), y(buf[1]), z(buf[2]) {}
   Vec3(T x, T y, T z) : x(x), y(y), z(z) {}
   T &operator[](int i) { return (&x)[i]; }
   T operator[](int i) const { return (&x)[i]; }

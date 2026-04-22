@@ -66,7 +66,7 @@ std::vector<Triangle<double>> read_stl(const char *path) {
       for (int j = 0; j < 3; j++) {
         float buf[3];
         ifs.read(reinterpret_cast<char *>(buf), sizeof(float[3]));
-        t[j] = Vec3<double>(buf);
+        t[j] = Vec3<float>(buf).as<double>();
       }
       uint16_t attribute_byte_count;
       ifs.read(reinterpret_cast<char *>(&attribute_byte_count),
