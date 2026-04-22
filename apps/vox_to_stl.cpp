@@ -18,6 +18,8 @@
 #include "../libs/stl_io.hpp"
 #include "../libs/vec3.hpp"
 
+using DICT = std::unordered_map<std::string, std::string>;
+
 static std::string read_string(std::ifstream &ifs) {
   uint32_t buffer_size;
   ifs.read(reinterpret_cast<char *>(&buffer_size), sizeof(uint32_t));
@@ -30,12 +32,11 @@ static std::string read_string(std::ifstream &ifs) {
   return result;
 }
 
-static std::unordered_map<std::string, std::string>
-read_dict(std::ifstream &ifs) {
+static DICT read_dict(std::ifstream &ifs) {
   uint32_t num_key_value_pairs;
   ifs.read(reinterpret_cast<char *>(&num_key_value_pairs), sizeof(uint32_t));
   assert(num_key_value_pairs >= 0);
-  std::unordered_map<std::string, std::string> result;
+  DICT result;
   if (num_key_value_pairs == 0) {
     return result;
   }
@@ -45,6 +46,12 @@ read_dict(std::ifstream &ifs) {
     auto value = read_string(ifs);
     result[key] = value;
   }
+  return result;
+}
+
+static float float_from_str(const std::string &str, float default_value) {
+  float result = default_value;
+  fast_float::from_chars(str.data(), str.data() + str.size(), result);
   return result;
 }
 
@@ -84,6 +91,11 @@ struct OBJ_material {
   uint8_t illum = 2; // illumination model
 };
 
+struct MATL_chunk {
+  uint32_t id;
+  DICT props;
+};
+
 int main(int argc, char *argv[]) {
   if (argc != 2) {
     std::cerr << "Expected arguments: /path/to/input.vox" << std::endl;
@@ -114,6 +126,8 @@ int main(int argc, char *argv[]) {
 
   ofs_obj << "mtllib " << filename_mtl << '\n';
 
+  std::vector<MATL_chunk> matl_chunks;
+  matl_chunks.reserve(256);
   OBJ_material obj_materials[256];
   RGBA palette[256] = {
       0x00000000, 0xffffffff, 0xffccffff, 0xff99ffff, 0xff66ffff, 0xff33ffff,
@@ -313,7 +327,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Material property: " << key << " = " << value
                   << std::endl;
       }
-      // TODO: set obj material properties based on material_properties
+      matl_chunks.push_back({material_id, material_properties});
       auto f2 = ifs_vox.tellg();
       assert(f2 - f1 == chunk_size);
     } else if (std::string_view(chunk_id, 4) == "MATT") {
@@ -343,15 +357,6 @@ int main(int argc, char *argv[]) {
       std::cout << "Found RGBA chunk!" << std::endl;
       auto f1 = ifs_vox.tellg();
       ifs_vox.read(reinterpret_cast<char *>(palette + 1), sizeof(RGBA) * 255);
-      for (size_t i = 0; i < 256; i++) {
-        auto r = palette[i].r / 255.0f;
-        auto g = palette[i].g / 255.0f;
-        auto b = palette[i].b / 255.0f;
-        r = std::pow(r, 2.2f);
-        g = std::pow(g, 2.2f);
-        b = std::pow(b, 2.2f);
-        obj_materials[i].Kd = {r, g, b};
-      }
       ifs_vox.seekg(sizeof(RGBA), std::ios::cur);
       auto f2 = ifs_vox.tellg();
       assert(f2 - f1 == chunk_size);
@@ -360,6 +365,53 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  // Set diffuse color from palette;
+  for (size_t i = 0; i < 256; i++) {
+    auto r = palette[i].r / 255.0f;
+    auto g = palette[i].g / 255.0f;
+    auto b = palette[i].b / 255.0f;
+    r = std::pow(r, 2.2f);
+    g = std::pow(g, 2.2f);
+    b = std::pow(b, 2.2f);
+    obj_materials[i].Kd = {r, g, b};
+  }
+
+  // Set material properties from MATL chunks
+  assert(matl_chunks.size() == 256);
+  for (auto &matl_chunk : matl_chunks) {
+    if (matl_chunk.id == 256) {
+      continue;
+    }
+    auto matl_chunk_type = matl_chunk.props["_type"];
+    if (matl_chunk_type.empty()) {
+      continue;
+    }
+    auto &obj_mat = obj_materials[matl_chunk.id];
+    const auto &diffuse_color = obj_mat.Kd;
+
+    if (matl_chunk_type == "_emit") {
+      auto emit_str = matl_chunk.props["_emit"];
+      float emit = float_from_str(emit_str, 0.0f);
+      obj_mat.Ke = {diffuse_color[0] * emit, diffuse_color[1] * emit,
+                    diffuse_color[2] * emit};
+    } else if (matl_chunk_type == "_metal") {
+      obj_mat.illum = 3;
+      auto metal_str = matl_chunk.props["_metal"];
+      float metal = float_from_str(metal_str, 0.0f);
+      if (metal > 0.0f) {
+        obj_mat.Ka = {metal, metal, metal};
+      }
+      auto ri_str = matl_chunk.props["_ri"];
+      obj_mat.Ni = float_from_str(ri_str, 1.3f);
+
+      auto roughness_str = matl_chunk.props["_rough"];
+      auto roughness = float_from_str(roughness_str, 0.0f);
+      obj_mat.Ns = 1.0f - roughness;
+      obj_mat.Ns *= obj_mat.Ns * 1000.0f;
+    }
+  }
+
+  // Write materials to .mtl file
   for (size_t i = 0; i < 256; i++) {
     ofs_mtl << "newmtl " << std::to_string(i) << '\n';
     ofs_mtl << "Ka " << obj_materials[i].Ka[0] << ' ' << obj_materials[i].Ka[1]
