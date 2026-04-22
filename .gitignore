@@ -5,3 +5,5 @@ build
 *.stl
 *.obj
 *.mtl
+*.bin
+output.txt
