@@ -259,7 +259,8 @@ int main(int argc, char *argv[]) {
           "vox" + std::to_string(model_id) + "_vertices.bin";
       std::ofstream ofs_vertices(filename_vertices, std::ios::binary);
       for (const auto &v : mesh.vertices) {
-        ofs_vertices.write(reinterpret_cast<const char *>(&v.as<float>()),
+        auto vf = v.as<float>();
+        ofs_vertices.write(reinterpret_cast<const char *>(&vf),
                            sizeof(Vec3<float>));
       }
 
@@ -307,7 +308,8 @@ int main(int argc, char *argv[]) {
       float *properties = (float *)malloc(sizeof(float) * n);
       ifs_vox.read(reinterpret_cast<char *>(properties), sizeof(float) * n);
 
-      // TODO: store material properties and use them to set PBR values for each material.
+      // TODO: store material properties and use them to set PBR values for each
+      // material.
 
       auto f2 = ifs_vox.tellg();
       assert(f2 - f1 == chunk_size);
