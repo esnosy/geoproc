@@ -339,11 +339,11 @@ int main(int argc, char *argv[]) {
       continue;
     }
     auto &pbr_mat = pbr_materials[matl_chunk.id];
-    pbr_mat.emission = float_from_str(matl_chunk.props["_emit"], 0.0f);
     pbr_mat.metallic = float_from_str(matl_chunk.props["_metal"], 0.0f);
-    pbr_mat.ior = float_from_str(matl_chunk.props["_ri"], 1.3f);
     pbr_mat.roughness = float_from_str(matl_chunk.props["_rough"], 0.0f);
+    pbr_mat.ior = float_from_str(matl_chunk.props["_ri"], 1.3f);
     pbr_mat.transmission = float_from_str(matl_chunk.props["_trans"], 0.0f);
+    pbr_mat.emission = float_from_str(matl_chunk.props["_emit"], 0.0f);
   }
 
   std::ofstream ofs_pbr("pbr_materials.bin", std::ios::binary);
