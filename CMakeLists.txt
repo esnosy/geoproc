@@ -15,5 +15,5 @@ target_link_libraries(sample_surface PUBLIC stl_io ply_io)
 add_executable(bvh_demo apps/bvh.cpp)
 target_link_libraries(bvh_demo PUBLIC stl_io)
 
-add_executable(vox_to_stl apps/vox_to_stl.cpp)
-target_link_libraries(vox_to_stl PUBLIC stl_io ply_io)
+add_executable(vox_to_surface apps/vox_to_surface.cpp)
+target_link_libraries(vox_to_surface PUBLIC stl_io ply_io)
