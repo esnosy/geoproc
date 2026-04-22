@@ -321,7 +321,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // Set diffuse color from palette;
+  // Set base color from palette;
   for (size_t i = 0; i < 256; i++) {
     auto r = palette[i].r / 255.0f;
     auto g = palette[i].g / 255.0f;
