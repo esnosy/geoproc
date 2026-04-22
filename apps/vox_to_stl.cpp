@@ -307,6 +307,8 @@ int main(int argc, char *argv[]) {
       float *properties = (float *)malloc(sizeof(float) * n);
       ifs_vox.read(reinterpret_cast<char *>(properties), sizeof(float) * n);
 
+      // TODO: store material properties and use them to set PBR values for each material.
+
       auto f2 = ifs_vox.tellg();
       assert(f2 - f1 == chunk_size);
     } else if (std::string_view(chunk_id, 4) == "RGBA") {
