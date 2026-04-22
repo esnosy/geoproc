@@ -25,9 +25,10 @@ template <typename T> struct Indexed_Tri_Mesh {
       for (int i = 0; i < 3; i++) {
         auto v_it = vertex_to_index.find(t[i]);
         if (v_it == vertex_to_index.end()) {
+          auto unique_vertex_index = mesh.vertices.size();
+          vertex_to_index[t[i]] = unique_vertex_index;
+          indexed_tri[i] = unique_vertex_index;
           mesh.vertices.push_back(t[i]);
-          vertex_to_index[t[i]] = vertex_to_index.size();
-          indexed_tri[i] = vertex_to_index.size() - 1;
         } else {
           indexed_tri[i] = v_it->second;
         }
