@@ -86,13 +86,37 @@ union RGBA {
   RGBA(uint32_t rgba) : rgba(rgba) {}
 };
 
+enum class PBR_Surface_Material_Type : uint32_t {
+  Diffuse = 0,
+  Metal = 1,
+  Emit = 2,
+  Glass = 3,
+  Blend = 4,
+  Cloud = 5,
+};
+
+enum class PBR_Volume_Material_Type : uint32_t {
+  Absorption = 0,
+  Scatter = 1,
+  Emission = 2,
+  Subsurface = 3,
+};
+
 struct PBR_Material {
-  std::array<float, 3> base_color = {1.0f, 1.0f, 1.0f};
+  PBR_Surface_Material_Type surface_type = PBR_Surface_Material_Type::Diffuse;
+  PBR_Volume_Material_Type volume_type = PBR_Volume_Material_Type::Absorption;
+  float r;
+  float g;
+  float b;
   float metallic = 0.0f;
   float roughness = 0.0f;
   float ior = 1.0f;
   float transmission = 0.0f;
   float emission = 0.0f;
+  float density = 1.0f;
+  float phase = 0.0f;
+  bool has_surface = true;
+  bool has_volume = false;
 };
 
 struct MATL_chunk {
@@ -333,7 +357,9 @@ int main(int argc, char *argv[]) {
     r = std::pow(r, 2.2f);
     g = std::pow(g, 2.2f);
     b = std::pow(b, 2.2f);
-    pbr_materials[i].base_color = {r, g, b};
+    pbr_materials[i].r = r;
+    pbr_materials[i].g = g;
+    pbr_materials[i].b = b;
   }
 
   // Set material properties from MATL chunks
@@ -348,6 +374,44 @@ int main(int argc, char *argv[]) {
     pbr_mat.ior = float_from_str(matl_chunk.props["_ri"], 1.3f);
     pbr_mat.transmission = float_from_str(matl_chunk.props["_trans"], 0.0f);
     pbr_mat.emission = float_from_str(matl_chunk.props["_emit"], 0.0f);
+    pbr_mat.density = float_from_str(matl_chunk.props["_d"], 1.0f);
+    pbr_mat.phase = float_from_str(matl_chunk.props["_g"], 0.0f);
+
+    auto type = matl_chunk.props["_type"];
+    if (type == "_media" || type == "_blend" || type == "_glass") {
+      pbr_mat.has_volume = true;
+    } else {
+      pbr_mat.has_volume = false;
+    }
+    if (type == "_blend" || type == "_glass" || type == "_diffuse" ||
+        type == "_metal" || type == "_emit") {
+      pbr_mat.has_surface = true;
+    } else {
+      pbr_mat.has_surface = false;
+    }
+    if (type == "_blend") {
+      pbr_mat.surface_type = PBR_Surface_Material_Type::Blend;
+    } else if (type == "_glass") {
+      pbr_mat.surface_type = PBR_Surface_Material_Type::Glass;
+    } else if (type == "") {
+      pbr_mat.surface_type = PBR_Surface_Material_Type::Diffuse;
+    } else if (type == "_metal") {
+      pbr_mat.surface_type = PBR_Surface_Material_Type::Metal;
+    } else if (type == "_emit") {
+      pbr_mat.surface_type = PBR_Surface_Material_Type::Emit;
+    } else if (type == "_media") {
+      pbr_mat.surface_type = PBR_Surface_Material_Type::Cloud;
+    }
+    auto media_type = matl_chunk.props["_media_type"];
+    if (media_type == "_scatter") {
+      pbr_mat.volume_type = PBR_Volume_Material_Type::Scatter;
+    } else if (media_type == "_emit") {
+      pbr_mat.volume_type = PBR_Volume_Material_Type::Emission;
+    } else if (media_type == "_sss") {
+      pbr_mat.volume_type = PBR_Volume_Material_Type::Subsurface;
+    } else if (media_type == "") {
+      pbr_mat.volume_type = PBR_Volume_Material_Type::Absorption;
+    }
   }
 
   std::ofstream ofs_pbr("pbr_materials.bin", std::ios::binary);
