@@ -102,6 +102,7 @@ enum class PBR_Volume_Material_Type : uint32_t {
   Subsurface = 3,
 };
 
+#pragma pack(push, 1)
 struct PBR_Material {
   PBR_Surface_Material_Type surface_type = PBR_Surface_Material_Type::Diffuse;
   PBR_Volume_Material_Type volume_type = PBR_Volume_Material_Type::Absorption;
@@ -118,6 +119,7 @@ struct PBR_Material {
   bool has_surface = true;
   bool has_volume = false;
 };
+#pragma pack(pop)
 
 struct MATL_chunk {
   uint32_t id;
