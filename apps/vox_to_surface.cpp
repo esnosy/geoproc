@@ -295,6 +295,13 @@ int main(int argc, char *argv[]) {
       ofs_tris.write(reinterpret_cast<const char *>(mesh.tris.data()),
                      mesh.tris.size() * sizeof(uint32_t[3]));
 
+      std::string filename_color_indices =
+          "vox" + std::to_string(model_id) + "_color_indices.bin";
+      std::ofstream ofs_color_indices(filename_color_indices, std::ios::binary);
+      ofs_color_indices.write(
+          reinterpret_cast<const char *>(color_indices.data()),
+          color_indices.size() * sizeof(uint8_t));
+
       assert(mesh.tris.size() == color_indices.size());
       model_id++;
     } else if (std::string_view(chunk_id, 4) == "MATL") {
