@@ -383,7 +383,7 @@ int main(int argc, char *argv[]) {
     pbr_mat.transmission = float_from_str(matl_chunk.props["_trans"], 0.0f);
     pbr_mat.emission = float_from_str(matl_chunk.props["_emit"], 0.0f);
     pbr_mat.emission_power = float_from_str(matl_chunk.props["_flux"], 0.0f);
-    pbr_mat.density = float_from_str(matl_chunk.props["_d"], 0.1f);
+    pbr_mat.density = float_from_str(matl_chunk.props["_d"], 0.0f);
     pbr_mat.phase = float_from_str(matl_chunk.props["_g"], 0.0f);
 
     auto type = matl_chunk.props["_type"];
