@@ -117,8 +117,6 @@ struct PBR_Material {
   float emission_power = 0.0f;
   float density = 1.0f;
   float phase = 0.0f;
-  bool has_surface = true;
-  bool has_volume = false;
 };
 #pragma pack(pop)
 
@@ -382,17 +380,6 @@ int main(int argc, char *argv[]) {
     pbr_mat.phase = float_from_str(matl_chunk.props["_g"], 0.0f);
 
     auto type = matl_chunk.props["_type"];
-    if (type == "_media" || type == "_blend" || type == "_glass") {
-      pbr_mat.has_volume = true;
-    } else {
-      pbr_mat.has_volume = false;
-    }
-    if (type == "_blend" || type == "_glass" || type == "" ||
-        type == "_metal" || type == "_emit") {
-      pbr_mat.has_surface = true;
-    } else {
-      pbr_mat.has_surface = false;
-    }
     if (type == "_blend") {
       pbr_mat.surface_type = PBR_Surface_Material_Type::Blend;
     } else if (type == "_glass") {
