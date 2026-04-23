@@ -385,7 +385,7 @@ int main(int argc, char *argv[]) {
     } else {
       pbr_mat.has_volume = false;
     }
-    if (type == "_blend" || type == "_glass" || type == "_diffuse" ||
+    if (type == "_blend" || type == "_glass" || type == "" ||
         type == "_metal" || type == "_emit") {
       pbr_mat.has_surface = true;
     } else {
