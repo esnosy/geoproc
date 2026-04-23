@@ -114,6 +114,7 @@ struct PBR_Material {
   float ior = 1.0f;
   float transmission = 0.0f;
   float emission = 0.0f;
+  float emission_power = 0.0f;
   float density = 1.0f;
   float phase = 0.0f;
   bool has_surface = true;
@@ -376,6 +377,7 @@ int main(int argc, char *argv[]) {
     pbr_mat.ior = float_from_str(matl_chunk.props["_ri"], 1.3f);
     pbr_mat.transmission = float_from_str(matl_chunk.props["_trans"], 0.0f);
     pbr_mat.emission = float_from_str(matl_chunk.props["_emit"], 0.0f);
+    pbr_mat.emission_power = float_from_str(matl_chunk.props["_flux"], 0.0f);
     pbr_mat.density = float_from_str(matl_chunk.props["_d"], 1.0f);
     pbr_mat.phase = float_from_str(matl_chunk.props["_g"], 0.0f);
 
