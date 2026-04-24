@@ -12,7 +12,7 @@ add_library(ply_io STATIC libs/ply_io.cpp)
 add_executable(sample_surface apps/sample_surface.cpp)
 target_link_libraries(sample_surface PUBLIC stl_io ply_io)
 
-add_executable(bvh_demo apps/bvh.cpp)
+add_executable(bvh_demo apps/bvh_demo.cpp)
 target_link_libraries(bvh_demo PUBLIC stl_io)
 
 add_executable(vox_to_surface apps/vox_to_surface.cpp)
