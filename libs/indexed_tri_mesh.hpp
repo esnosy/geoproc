@@ -53,14 +53,14 @@ template <typename T> struct Indexed_Tri_Mesh {
   std::vector<Vec3<T>> calc_vertex_normals() const {
     std::vector<Vec3<T>> vertex_normals;
     vertex_normals.resize(vertices.size(), Vec3<T>(0, 0, 0));
-    for (size_t i = 0; i < tris.size(); i++) {
-      const auto &indexed_tri = tris[i];
-      const auto &tri =
-          Triangle<T>{vertices[indexed_tri[0]], vertices[indexed_tri[1]],
-                      vertices[indexed_tri[2]]};
+    for (const auto &indexed_tri : tris) {
+      auto v1 = vertices[indexed_tri[0]];
+      auto v2 = vertices[indexed_tri[1]];
+      auto v3 = vertices[indexed_tri[2]];
+      const auto &tri = Triangle<T>{v1, v2, v3};
       const auto &n = tri.calc_normal_unnormalized();
-      for (int j = 0; j < 3; j++) {
-        vertex_normals[indexed_tri[j]] += n;
+      for (int i = 0; i < 3; i++) {
+        vertex_normals[indexed_tri[i]] += n;
       }
     }
     for (auto &n : vertex_normals) {
