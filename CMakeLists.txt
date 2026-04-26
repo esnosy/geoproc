@@ -17,3 +17,6 @@ target_link_libraries(bvh_demo PUBLIC stl_io)
 
 add_executable(vox_to_surface apps/vox_to_surface.cpp)
 target_link_libraries(vox_to_surface PUBLIC stl_io ply_io)
+
+add_executable(poke_faces apps/poke_faces.cpp)
+target_link_libraries(poke_faces PUBLIC stl_io)
