@@ -20,3 +20,6 @@ target_link_libraries(vox_to_surface PUBLIC stl_io ply_io)
 
 add_executable(poke_faces apps/poke_faces.cpp)
 target_link_libraries(poke_faces PUBLIC stl_io)
+
+add_executable(smooth_vertices apps/smooth_vertices.cpp)
+target_link_libraries(smooth_vertices PUBLIC stl_io)
