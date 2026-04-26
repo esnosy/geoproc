@@ -38,6 +38,18 @@ template <typename T> struct Indexed_Tri_Mesh {
     return mesh;
   }
 
+  std::vector<Triangle<T>> to_tris() const {
+    std::vector<Triangle<T>> tris_out;
+    tris_out.reserve(tris.size());
+    for (const auto &t : tris) {
+      auto v1 = vertices[t[0]];
+      auto v2 = vertices[t[1]];
+      auto v3 = vertices[t[2]];
+      tris_out.push_back(Triangle<T>{v1, v2, v3});
+    }
+    return tris_out;
+  }
+
   std::vector<Vec3<T>> calc_vertex_normals() const {
     std::vector<Vec3<T>> vertex_normals;
     vertex_normals.resize(vertices.size(), Vec3<T>(0, 0, 0));

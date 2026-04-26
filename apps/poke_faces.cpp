@@ -33,14 +33,5 @@ int main(int argc, char *argv[]) {
     subdivided_mesh.tris.insert(subdivided_mesh.tris.end(), {t1, t2, t3});
   }
 
-  std::vector<Triangle<double>> subdivided_tris;
-  subdivided_tris.reserve(subdivided_mesh.tris.size());
-  for (const auto &t : subdivided_mesh.tris) {
-    auto v1 = subdivided_mesh.vertices[t[0]];
-    auto v2 = subdivided_mesh.vertices[t[1]];
-    auto v3 = subdivided_mesh.vertices[t[2]];
-    subdivided_tris.push_back(Triangle<double>{v1, v2, v3});
-  }
-
-  write_stl_binary(output_path, subdivided_tris);
+  write_stl_binary(output_path, subdivided_mesh.to_tris());
 }
