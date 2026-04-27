@@ -23,3 +23,6 @@ target_link_libraries(poke_faces PUBLIC stl_io)
 
 add_executable(smooth_vertices apps/smooth_vertices.cpp)
 target_link_libraries(smooth_vertices PUBLIC stl_io)
+
+add_executable(shrink_fatten apps/shrink_fatten.cpp)
+target_link_libraries(shrink_fatten PUBLIC stl_io)
