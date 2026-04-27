@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
         const auto &n3 = vertex_normals[tri[2]];
         auto u = result.intersection.u;
         auto v = result.intersection.v;
-        auto normal = (1 - u - v) * n1 + u * n2 + v * n3;
+        auto normal = ((1 - u - v) * n1 + u * n2 + v * n3).normalized();
         uint32_t c = std::clamp(
             std::abs(normal.dot(-ray.direction.normalized())) * 255.0, 0.0,
             255.0);
