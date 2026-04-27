@@ -101,8 +101,9 @@ int main(int argc, char *argv[]) {
         const auto &n1 = vertex_normals[tri[0]];
         const auto &n2 = vertex_normals[tri[1]];
         const auto &n3 = vertex_normals[tri[2]];
-        auto normal = (1 - result.intersection.u - result.intersection.v) * n1 +
-                      result.intersection.u * n2 + result.intersection.v * n3;
+        auto u = result.intersection.u;
+        auto v = result.intersection.v;
+        auto normal = (1 - u - v) * n1 + u * n2 + v * n3;
         uint32_t c = std::clamp(
             std::abs(normal.dot(-ray.direction.normalized())) * 255.0, 0.0,
             255.0);
