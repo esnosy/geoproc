@@ -58,7 +58,7 @@ template <typename T> struct Indexed_Tri_Mesh {
       auto v2 = vertices[indexed_tri[1]];
       auto v3 = vertices[indexed_tri[2]];
       const auto &tri = Triangle<T>{v1, v2, v3};
-      const auto &n = tri.calc_normal_unnormalized();
+      const auto &n = tri.calc_normal();
       for (int i = 0; i < 3; i++) {
         vertex_normals[indexed_tri[i]] += n;
       }
