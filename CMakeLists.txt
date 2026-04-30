@@ -29,3 +29,6 @@ target_link_libraries(shrink_fatten PUBLIC stl_io)
 
 add_executable(subdivide apps/subdivide.cpp)
 target_link_libraries(subdivide PUBLIC stl_io)
+
+add_executable(sample_volume apps/sample_volume.cpp)
+target_link_libraries(sample_volume PUBLIC stl_io ply_io)

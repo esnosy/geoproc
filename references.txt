@@ -23,3 +23,6 @@ https://github.com/ephtracy/voxel-model/blob/8044f9eb086216f3485cdaa525a52120d72
 
 Gamma correction:
 https://web.archive.org/web/20260421205717/https://learnopengl.com/Advanced-Lighting/Gamma-Correction
+
+Sampling a sphere uniformly:
+https://web.archive.org/web/20260430160534/https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations#UniformSampleSphere

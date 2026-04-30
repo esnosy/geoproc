@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <functional>
 #include <vector>
 
 #include "aabb.hpp"
@@ -39,7 +40,7 @@ template <typename T> struct Ray {
 };
 
 template <typename T>
-Ray_Triangle_Intersection<T> intersect_ray_triangle(Ray<T> &ray,
+Ray_Triangle_Intersection<T> intersect_ray_triangle(const Ray<T> &ray,
                                                     const Triangle<T> &tri) {
   Ray_Triangle_Intersection<T> result;
   const Vec3<T> edge1 = tri.b - tri.a;
@@ -99,6 +100,29 @@ public:
 
 private:
   template <typename T>
+  void count_intersections(const Ray<T> &ray,
+                           const std::vector<Triangle<T>> &tris,
+                           uint32_t node_idx, size_t &num_intersections) {
+    BVH_Node &node = nodes[node_idx];
+    AABB<T> node_aabb{node.aabb.min.as<T>(), node.aabb.max.as<T>()};
+    if (!intersect_ray_aabb(ray, node_aabb)) {
+      return;
+    }
+    if (node.is_leaf()) {
+      for (uint32_t i = 0; i < node.prim_count; i++) {
+        auto tri_idx = indices[node.left_first + i];
+        auto tri_result = intersect_ray_triangle(ray, tris[tri_idx]);
+        if (tri_result.hit) {
+          num_intersections++;
+        }
+      }
+    } else {
+      count_intersections(ray, tris, node.left_first, num_intersections);
+      count_intersections(ray, tris, node.left_first + 1, num_intersections);
+    }
+  }
+
+  template <typename T>
   void intersect_tris(Ray<T> &ray, const std::vector<Triangle<T>> &tris,
                       uint32_t node_idx,
                       Ray_Triangles_Intersection<T> &tris_result) {
@@ -138,6 +162,14 @@ public:
     Ray_Triangles_Intersection<T> tris_result;
     intersect_tris(ray, tris, 0, tris_result);
     return tris_result;
+  }
+
+  template <typename T>
+  size_t count_intersections(const Ray<T> &ray,
+                             const std::vector<Triangle<T>> &tris) {
+    size_t num_intersections = 0;
+    count_intersections(ray, tris, 0, num_intersections);
+    return num_intersections;
   }
 };
 
