@@ -35,15 +35,15 @@ int main(int argc, char *argv[]) {
 
   // Generate random directions
 
-  std::mt19937 rng(seed);
+  std::mt19937 directions_rng(0);
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
   auto num_dirs = 32;
   std::vector<Vec3<float>> directions;
   directions.reserve(num_dirs);
   for (int i = 0; i < num_dirs; i++) {
     std::array<float, 2> u;
-    u[0] = dist(rng);
-    u[1] = dist(rng);
+    u[0] = dist(directions_rng);
+    u[1] = dist(directions_rng);
     auto dir = uniform_sample_sphere(u);
     directions.push_back(dir);
   }
@@ -73,10 +73,12 @@ int main(int argc, char *argv[]) {
   std::vector<Vec3<double>> samples;
   samples.reserve(num_samples);
 
+  std::mt19937 sample_rng(seed);
+
   for (size_t i = 0; i < num_samples; i++) {
-    auto sample_x = dist_x(rng);
-    auto sample_y = dist_y(rng);
-    auto sample_z = dist_z(rng);
+    auto sample_x = dist_x(sample_rng);
+    auto sample_y = dist_y(sample_rng);
+    auto sample_z = dist_z(sample_rng);
     Vec3<float> sample(sample_x, sample_y, sample_z);
     size_t num_odd = 0;
     for (const auto &dir : directions) {
