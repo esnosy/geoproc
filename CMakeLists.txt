@@ -35,3 +35,6 @@ target_link_libraries(sample_volume PUBLIC stl_io ply_io)
 
 add_executable(separate_islands apps/separate_islands.cpp)
 target_link_libraries(separate_islands PUBLIC stl_io)
+
+add_executable(off_to_stl apps/off_to_stl.cpp)
+target_link_libraries(off_to_stl PUBLIC stl_io)
