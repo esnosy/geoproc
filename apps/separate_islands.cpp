@@ -16,8 +16,8 @@ int main(int argc, char *argv[]) {
   auto mesh = Indexed_Tri_Mesh<double>::from_stl_tris(tris);
   std::vector<bool> tris_visited(mesh.tris.size(), false);
   std::vector<bool> vertices_visited(mesh.vertices.size(), false);
-  std::vector<std::vector<uint32_t>> per_vertex_neighbour_tris(
-      mesh.vertices.size(), {});
+  std::vector<std::vector<uint32_t>> per_vertex_neighbour_tris;
+  per_vertex_neighbour_tris.resize(mesh.vertices.size());
   for (size_t i = 0; i < mesh.tris.size(); i++) {
     const auto &t = mesh.tris[i];
     for (int j = 0; j < 3; j++) {
