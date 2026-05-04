@@ -4,7 +4,7 @@
 
 void write_points_to_ply(const char *path,
                          const std::vector<Vec3<double>> &points) {
-  std::ofstream ofs(path, std::ios::binary);
+  std::ofstream ofs(path, std::ios::binary | std::ios::trunc);
   ofs << "ply\n"
       << "format binary_little_endian 1.0\n"
       << "element vertex " << points.size() << '\n'

@@ -114,7 +114,7 @@ void write_stl_binary(const char *path,
                       const std::vector<Triangle<double>> &tris) {
   char header[80] = {};
   uint32_t num_tris = (uint32_t)tris.size();
-  std::ofstream ofs(path, std::ios::binary);
+  std::ofstream ofs(path, std::ios::binary | std::ios::trunc);
   ofs.write(header, 80);
   ofs.write(reinterpret_cast<const char *>(&num_tris), sizeof(uint32_t));
   for (const auto &t : tris) {
@@ -132,7 +132,7 @@ void write_stl_binary(const char *path,
 
 void write_stl_ascii(const char *path,
                      const std::vector<Triangle<double>> &tris) {
-  std::ofstream ofs(path, std::ios::binary);
+  std::ofstream ofs(path, std::ios::binary | std::ios::trunc);
   ofs << "solid \n";
   for (const auto &t : tris) {
     ofs << "  facet normal 0 0 0\n";

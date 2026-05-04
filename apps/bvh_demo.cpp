@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
   auto pixel00_loc =
       viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
-  std::ofstream ofs("output.ppm", std::ios::binary);
+  std::ofstream ofs("output.ppm", std::ios::binary | std::ios::trunc);
   ofs << "P6\n" << image_width << " " << image_height << "\n255\n";
 
   t0 = std::chrono::high_resolution_clock::now();

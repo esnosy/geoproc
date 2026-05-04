@@ -282,7 +282,7 @@ int main(int argc, char *argv[]) {
 
       std::string filename_vertices =
           "vox" + std::to_string(model_id) + "_vertices.bin";
-      std::ofstream ofs_vertices(filename_vertices, std::ios::binary);
+      std::ofstream ofs_vertices(filename_vertices, std::ios::binary | std::ios::trunc);
       for (const auto &v : mesh.vertices) {
         auto vf = v.as<float>();
         ofs_vertices.write(reinterpret_cast<const char *>(&vf),
@@ -291,13 +291,13 @@ int main(int argc, char *argv[]) {
 
       std::string filename_tris =
           "vox" + std::to_string(model_id) + "_tris.bin";
-      std::ofstream ofs_tris(filename_tris, std::ios::binary);
+      std::ofstream ofs_tris(filename_tris, std::ios::binary | std::ios::trunc);
       ofs_tris.write(reinterpret_cast<const char *>(mesh.tris.data()),
                      mesh.tris.size() * sizeof(uint32_t[3]));
 
       std::string filename_color_indices =
           "vox" + std::to_string(model_id) + "_color_indices.bin";
-      std::ofstream ofs_color_indices(filename_color_indices, std::ios::binary);
+      std::ofstream ofs_color_indices(filename_color_indices, std::ios::binary | std::ios::trunc);
       ofs_color_indices.write(
           reinterpret_cast<const char *>(color_indices.data()),
           color_indices.size() * sizeof(uint8_t));
@@ -412,7 +412,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  std::ofstream ofs_pbr("pbr_materials.bin", std::ios::binary);
+  std::ofstream ofs_pbr("pbr_materials.bin", std::ios::binary | std::ios::trunc);
   ofs_pbr.write(reinterpret_cast<const char *>(pbr_materials),
                 sizeof(PBR_Material) * 256);
 }
