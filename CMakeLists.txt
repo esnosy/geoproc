@@ -32,3 +32,6 @@ target_link_libraries(subdivide PUBLIC stl_io)
 
 add_executable(sample_volume apps/sample_volume.cpp)
 target_link_libraries(sample_volume PUBLIC stl_io ply_io)
+
+add_executable(separate_islands apps/separate_islands.cpp)
+target_link_libraries(separate_islands PUBLIC stl_io)
