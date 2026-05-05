@@ -26,7 +26,9 @@ union Undirected_Edge {
 };
 namespace std {
 template <> struct hash<Undirected_Edge> {
-  size_t operator()(const Undirected_Edge &e) const { return e.combined; }
+  size_t operator()(const Undirected_Edge &e) const {
+    return std::hash<uint64_t>()(e.combined);
+  }
 };
 } // namespace std
 
