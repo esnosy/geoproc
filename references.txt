@@ -26,3 +26,6 @@ https://web.archive.org/web/20260421205717/https://learnopengl.com/Advanced-Ligh
 
 Sampling a sphere uniformly:
 https://web.archive.org/web/20260430160534/https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations#UniformSampleSphere
+
+The OFF mesh file format:
+https://web.archive.org/web/20260508145158/https://durnan.org/off.html
