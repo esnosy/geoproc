@@ -19,6 +19,7 @@ template <typename T> Indexed_Ngon_Mesh<T> read_off(const char *path) {
   for (size_t i = 0; i < num_vertices; i++) {
     Vec3<T> v(0, 0, 0);
     ifs >> v.x >> v.y >> v.z;
+    // Ignore any following data
     ifs.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     result.vertices.push_back(v);
   }
@@ -31,6 +32,7 @@ template <typename T> Indexed_Ngon_Mesh<T> read_off(const char *path) {
       ifs >> vertex_index;
       result.faces[i][j] = vertex_index;
     }
+    // Ignore any following data
     ifs.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
   }
   return result;
